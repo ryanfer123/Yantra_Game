@@ -57,6 +57,12 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Pixel art game theme colors */
+    --pixel-navy: 225 85% 15%;
+    --pixel-cream: 45 76% 88%;
+    --pixel-cyan: 185 100% 50%;
+    --pixel-magenta: 290 100% 50%;
   }
 
   .dark {
