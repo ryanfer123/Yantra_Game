@@ -97,5 +97,16 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ addUtilities }: any) {
+      addUtilities({
+        ".pixelated": {
+          "image-rendering": "pixelated",
+          "image-rendering": "-moz-crisp-edges",
+          "image-rendering": "crisp-edges",
+        },
+      });
+    },
+  ],
 } satisfies Config;
