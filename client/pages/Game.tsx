@@ -1,17 +1,7 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Game() {
-  const [username, setUsername] = useState("");
   const navigate = useNavigate();
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username.trim()) {
-      localStorage.setItem("playerName", username);
-      navigate("/play");
-    }
-  };
 
   const handleGoogleLogin = () => {
     // Placeholder for Google OAuth - will redirect to signup page later
@@ -45,41 +35,6 @@ export default function Game() {
             <br />
             LOGIN
           </h2>
-
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
-            {/* Username Label */}
-            <div>
-              <label className="block font-pixel text-xs sm:text-sm text-gray-400 mb-2 uppercase">
-                Username
-              </label>
-
-              {/* Input Field */}
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="ENTER NAME"
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-900 border-2 border-gray-600 text-white placeholder-gray-500 font-pixel text-xs sm:text-sm focus:outline-none focus:border-pixel-cyan transition-colors"
-              />
-            </div>
-
-            {/* Login Button */}
-            <button
-              type="submit"
-              disabled={!username.trim()}
-              className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-transparent border-2 border-pixel-cyan text-pixel-cyan font-pixel text-xs sm:text-sm hover:bg-pixel-cyan/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase"
-            >
-              Login
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center my-4 sm:my-6">
-            <div className="flex-1 border-t border-gray-600"></div>
-            <span className="px-2 text-gray-500 font-pixel text-xs">OR</span>
-            <div className="flex-1 border-t border-gray-600"></div>
-          </div>
 
           {/* Google Login Button */}
           <button
