@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        pixel: ["'Press Start 2P'", "monospace"],
+        tiny: ["'Tiny5'", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -56,6 +60,12 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        pixel: {
+          navy: "hsl(var(--pixel-navy))",
+          cream: "hsl(var(--pixel-cream))",
+          cyan: "hsl(var(--pixel-cyan))",
+          magenta: "hsl(var(--pixel-magenta))",
         },
       },
       borderRadius: {
