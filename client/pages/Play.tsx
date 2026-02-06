@@ -1,78 +1,117 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import CivilianCharacter from "@/components/CivilianCharacter";
+import { useGameState } from "@/hooks/use-game-state";
+import { auth, onAuthStateChanged, signOut, type User } from "@/lib/firebase";
+import { refreshToken } from "@/lib/firebase";
+
+const labScene =
+  "http://localhost:3845/assets/5a925cb1d56c6100003d3c1261403d76bb2b4381.png";
 
 export default function Play() {
-  const [playerName, setPlayerName] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
+  // Auth guard – redirect to login if not signed in
   useEffect(() => {
-    const storedName = localStorage.getItem("playerName");
-    setPlayerName(storedName);
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthLoading(false);
+      if (!u) navigate("/game");
+    });
+    return unsub;
+  }, [navigate]);
+
+  // Refresh token every 50 minutes (tokens expire in 60 min)
+  useEffect(() => {
+    const interval = setInterval(() => refreshToken(), 50 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("playerName");
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
   };
 
+  // Read session from localStorage (set after login/join)
+  const sessionId = localStorage.getItem("sessionId");
+  const { state } = useGameState(sessionId);
+
+  const health = state?.globalHealth ?? 100;
+  const round = state?.currentRound ?? 1;
+  const role = state?.playerRole ?? "citizen";
+  const trustScore = state?.playerTrustScore ?? 0;
+  const totalPlayers = state?.totalPlayers ?? 0;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen w-full bg-[#1f2227] flex items-center justify-center">
+        <span className="font-pixel text-sm text-pixel-cyan animate-pulse">LOADING...</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen w-full bg-pixel-navy flex items-center justify-center overflow-hidden relative">
-      {/* Background image - pixel art cityscape */}
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#1f2227]">
       <img
-        src="https://api.builder.io/api/v1/image/assets/TEMP/37dd726e68a0725cf6d40157a803bb41645d6400?width=2880"
-        alt="Cyberpunk pixel art cityscape"
-        className="absolute inset-0 w-full h-full object-cover pixelated"
+        src={labScene}
+        alt="Lab scene"
+        className="absolute inset-0 h-full w-full object-cover pixelated"
       />
 
-      {/* Content container */}
-      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-4 sm:px-6 lg:px-8">
-        {/* Title */}
-        <h1 className="font-tiny text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-pixel-cream text-center leading-tight mb-8 sm:mb-12">
-          THE LAST
-          <br />
-          OF O.S
-        </h1>
+      {/* Civilian character – move with W A S D */}
+      <CivilianCharacter />
 
-        {/* Welcome message */}
-        {playerName && (
-          <div className="mb-8 sm:mb-12 text-center">
-            <p className="font-pixel text-base sm:text-lg md:text-xl text-pixel-cyan mb-2">
-              WELCOME, {playerName.toUpperCase()}
-            </p>
-            <p className="font-pixel text-xs sm:text-sm text-gray-400">
-              Ready to play?
-            </p>
-          </div>
+      {/* Top status bar – health */}
+      <div className="relative z-10 mx-auto mt-4 w-[92%] max-w-5xl">
+        <div className="relative flex h-7 sm:h-8 w-full overflow-hidden border-2 border-[#2b3446] bg-[#1b202b] shadow-[0_0_0_2px_rgba(12,14,20,0.7)]">
+          <div
+            className="h-full bg-[#2c7a54] health-bar-disintegrate transition-[width] duration-700"
+            style={{ width: `${health}%` }}
+          />
+          <div className="h-full flex-1 bg-[#2e3654]" />
+          {/* Chevron join */}
+          <div
+            className="absolute top-1/2 h-6 w-6 -translate-y-1/2 bg-[#2e3654] [clip-path:polygon(0_0,100%_50%,0_100%,18%_50%)] sm:h-7 sm:w-7 transition-[left] duration-700"
+            style={{ left: `${health}%` }}
+          />
+          {/* Health text */}
+          <span className="absolute inset-0 flex items-center justify-center font-pixel text-[10px] sm:text-xs text-white/80 tracking-wider">
+            SYSTEM HEALTH {health}%
+          </span>
+        </div>
+      </div>
+
+      {/* HUD – round, role, trust score */}
+      <div className="absolute z-10 top-14 left-4 sm:left-8 flex flex-col gap-1">
+        <span className="font-pixel text-[10px] sm:text-xs text-pixel-cyan uppercase">
+          Round {round}/4
+        </span>
+        <span className="font-pixel text-[10px] sm:text-xs text-pixel-cream uppercase">
+          Role: {role}
+        </span>
+        <span className="font-pixel text-[10px] sm:text-xs text-gray-400 uppercase">
+          Trust: {trustScore}
+        </span>
+        {user && (
+          <span className="font-pixel text-[10px] sm:text-xs text-gray-500">
+            {user.displayName}
+          </span>
         )}
+      </div>
 
-        {/* Game Content Placeholder */}
-        <div className="w-full max-w-2xl bg-black/60 border-2 sm:border-3 border-pixel-cyan p-6 sm:p-8 md:p-10 mb-8 sm:mb-12">
-          <h2 className="font-pixel text-base sm:text-lg md:text-xl text-white text-center mb-4 sm:mb-6 uppercase">
-            Game
-          </h2>
-
-          <div className="text-center">
-            <p className="font-pixel text-xs sm:text-sm text-gray-300 mb-4">
-              Game mechanics coming soon!
-            </p>
-            <p className="font-pixel text-xs text-gray-500">
-              Continue prompting to add gameplay here
-            </p>
-          </div>
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-          <Link
-            to="/"
-            onClick={handleLogout}
-            className="font-pixel text-xs sm:text-sm text-white px-4 sm:px-6 py-2 sm:py-3 border-2 border-white bg-transparent hover:bg-white/10 transition-colors"
-          >
-            LOGOUT
-          </Link>
-
-          <button className="font-pixel text-xs sm:text-sm text-pixel-cyan px-4 sm:px-6 py-2 sm:py-3 border-2 border-pixel-cyan bg-transparent hover:bg-pixel-cyan/20 transition-colors">
-            CONTINUE
-          </button>
-        </div>
+      {/* Player count + logout */}
+      <div className="absolute z-10 top-14 right-4 sm:right-8 flex flex-col items-end gap-1">
+        <span className="font-pixel text-[10px] sm:text-xs text-gray-400 uppercase">
+          Players: {totalPlayers}
+        </span>
+        <button
+          onClick={handleLogout}
+          className="font-pixel text-[10px] sm:text-xs text-red-400 hover:text-red-300 uppercase transition-colors"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

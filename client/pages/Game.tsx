@@ -1,12 +1,24 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signInWithGoogle } from "@/lib/firebase";
 
 export default function Game() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleLogin = () => {
-    // Placeholder for Google OAuth - will redirect to signup page later
-    // For now, just navigate to signup placeholder
-    navigate("/signup");
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await signInWithGoogle();
+      navigate("/play");
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      setError(err.message ?? "Login failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,12 +51,17 @@ export default function Game() {
           {/* Google Login Button */}
           <button
             onClick={handleGoogleLogin}
-            className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-transparent border-2 border-pixel-cyan text-pixel-cyan font-pixel text-xs sm:text-sm hover:bg-pixel-cyan/20 transition-colors uppercase"
+            disabled={loading}
+            className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-transparent border-2 border-pixel-cyan text-pixel-cyan font-pixel text-xs sm:text-sm hover:bg-pixel-cyan/20 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            LOGIN WITH
-            <br />
-            GOOGLE
+            {loading ? "SIGNING IN..." : "LOGIN WITH\nGOOGLE"}
           </button>
+
+          {error && (
+            <p className="mt-3 font-pixel text-[10px] sm:text-xs text-red-400 text-center">
+              {error}
+            </p>
+          )}
         </div>
 
         {/* Back button */}

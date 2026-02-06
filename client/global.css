@@ -124,3 +124,56 @@
     white-space: pre;
   }
 }
+
+@layer utilities {
+  .pixelated {
+    image-rendering: pixelated;
+  }
+
+  .health-bar-disintegrate {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .health-bar-disintegrate::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.22) 0,
+        rgba(255, 255, 255, 0.22) 3px,
+        rgba(0, 0, 0, 0) 3px,
+        rgba(0, 0, 0, 0) 9px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.35) 0,
+        rgba(0, 0, 0, 0.35) 2px,
+        rgba(0, 0, 0, 0) 2px,
+        rgba(0, 0, 0, 0) 6px
+      );
+    mix-blend-mode: screen;
+    opacity: 0.6;
+    animation: health-disintegrate 2.8s steps(12, end) infinite;
+  }
+}
+
+@keyframes health-disintegrate {
+  0% {
+    transform: translateX(-8%);
+    opacity: 0.35;
+  }
+  40% {
+    transform: translateX(2%);
+    opacity: 0.6;
+  }
+  70% {
+    transform: translateX(-3%);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(10%);
+    opacity: 0.4;
+  }
+}
