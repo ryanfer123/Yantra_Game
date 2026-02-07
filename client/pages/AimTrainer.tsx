@@ -323,7 +323,7 @@ export default function AimTrainer() {
       {/* ─── RIGHT BOTTOM: Radio message card ─── */}
       <div className="absolute right-8 bottom-8 z-10">
         <div className="border border-white/30 bg-[#0a1428]/60 px-5 py-3 w-56">
-          <img src="/aim-chart.svg" alt="" className="w-28 h-10 mb-2 opacity-70" />
+          <img src="/aim-chart.svg" alt="" className="w-28 h-10 mb-2 opacity-70 mx-auto" />
           <p
             className="font-bold text-xs text-[#6ec4e5] uppercase text-center animate-radio-fade"
             key={radioIdx}
