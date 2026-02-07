@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 const GRID_SIZE = 5;
-const GAME_DURATION = 60; // seconds
+const GAME_DURATION = 45; // seconds
 
 function randomPos(): [number, number] {
   return [
@@ -317,7 +317,7 @@ export default function AimTrainer() {
                           : ""
                       }`}
                     >
-                      {isTarget && <img src="/glitch-sprite.png" alt="glitch" className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-contain drop-shadow-[0_0_12px_rgba(255,50,50,0.6)] animate-pulse" />}
+                      {isTarget && <img src="/glitch-sprite.png" alt="glitch" className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-contain drop-shadow-[0_0_12px_rgba(255,50,50,0.6)] animate-pulse" />}
                     </button>
                   );
                 })}
@@ -420,11 +420,6 @@ export default function AimTrainer() {
         }}
       >
         <img src="/aim-crosshair-new.svg" alt="" className="w-24 h-14" style={{ filter: 'drop-shadow(0 0 6px rgba(106,186,237,0.4))' }} />
-      </div>
-
-      {/* ─── CENTER: HUD crosshair indicator (static) ─── */}
-      <div className="absolute left-1/2 top-[47%] -translate-x-1/2 z-10 pointer-events-none">
-        <img src="/aim-hud.svg" alt="" className="w-16 h-10 opacity-40" />
       </div>
 
       {/* ─── TASK POPUP (placeholder) ─── */}
