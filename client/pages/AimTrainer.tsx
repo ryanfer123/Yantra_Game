@@ -99,6 +99,16 @@ export default function AimTrainer() {
   // ── Task popup placeholder ──
   const [showTaskPopup, setShowTaskPopup] = useState(false);
 
+  // ── Loading screen (shown when timer ends) ──
+  const [showLoading, setShowLoading] = useState(false);
+
+  useEffect(() => {
+    if (timeLeft === 0 && !showLoading) {
+      setShowLoading(true);
+      setTimeout(() => navigate("/play"), 3000);
+    }
+  }, [timeLeft, showLoading, navigate]);
+
   // ── Complete task → go back to portal ──
   const handleCompleteTask = () => {
     navigate("/play");
@@ -392,6 +402,47 @@ export default function AimTrainer() {
       >
         TASK
       </button>
+
+      {/* ─── LOADING SCREEN (when timer ends) ─── */}
+      {showLoading && (
+        <div
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 pointer-events-auto animate-loading-fade-in"
+          style={{ fontFamily: "'Jura', sans-serif" }}
+        >
+          {/* Scan lines overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-10"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(110,196,229,0.08) 2px, rgba(110,196,229,0.08) 4px)',
+            }}
+          />
+
+          {/* Glitch bar top */}
+          <div className="absolute top-[30%] left-0 right-0 h-px bg-[#6ec4e5]/20" />
+          <div className="absolute top-[70%] left-0 right-0 h-px bg-[#6ec4e5]/20" />
+
+          <p className="text-[#6ec4e5]/60 text-xs uppercase tracking-[0.3em] mb-6">
+            // RETURNING TO BASE
+          </p>
+
+          <h2 className="font-bold text-2xl text-[#6ec4e5] uppercase tracking-widest mb-3">
+            WAVE COMPLETE
+          </h2>
+
+          <p className="text-white/50 text-sm uppercase tracking-wider mb-8">
+            GLITCHES ELIMINATED : <span className="text-[#6ec4e5]">{glitchesEliminated}</span>
+          </p>
+
+          {/* Loading bar */}
+          <div className="w-64 h-1 bg-white/10 overflow-hidden">
+            <div className="h-full bg-[#6ec4e5] animate-loading-bar" />
+          </div>
+
+          <p className="text-white/30 text-[10px] uppercase tracking-widest mt-4">
+            TELEPORTING TO SECTOR MAP...
+          </p>
+        </div>
+      )}
     </div>
   );
 }
