@@ -51,8 +51,8 @@ const RECT_OBSTACLES = [
   { x1: 0, y1: 97, x2: 100, y2: 100 },
 ];
 
-// Central portal – elliptical collision
-const PORTAL = { cx: 50, cy: 50, rx: 26, ry: 32 };
+// Central portal – elliptical collision (tighter to match actual ring)
+const PORTAL = { cx: 50, cy: 53, rx: 22, ry: 24 };
 
 /** Check if a point (character centre) collides with any obstacle */
 function collides(cx: number, cy: number): boolean {
@@ -84,7 +84,7 @@ function collides(cx: number, cy: number): boolean {
 type Direction = "left" | "right";
 
 export default function CivilianCharacter() {
-  const [pos, setPos] = useState({ x: 50, y: 18 }); // start near the door (top-center)
+  const [pos, setPos] = useState({ x: 50, y: 15 }); // start near the door (top-center corridor)
   const [facing, setFacing] = useState<Direction>("right");
   const facingRef = useRef<Direction>("right");
   const [isMoving, setIsMoving] = useState(false);

@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CivilianCharacter from "@/components/CivilianCharacter";
 import { useGameState } from "@/hooks/use-game-state";
-import { auth, onAuthStateChanged, signOut, type User } from "@/lib/firebase";
+import { auth, onAuthStateChanged, type User } from "@/lib/firebase";
 import { refreshToken } from "@/lib/firebase";
 
-const labScene =
-  "http://localhost:3845/assets/5a925cb1d56c6100003d3c1261403d76bb2b4381.png";
+const labScene = "/lab-scene.png";
 
 export default function Play() {
   const navigate = useNavigate();
@@ -29,10 +28,7 @@ export default function Play() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/");
-  };
+
 
   // Read session from localStorage (set after login/join)
   const sessionId = localStorage.getItem("sessionId");
@@ -101,17 +97,11 @@ export default function Play() {
         )}
       </div>
 
-      {/* Player count + logout */}
+      {/* Player count */}
       <div className="absolute z-10 top-14 right-4 sm:right-8 flex flex-col items-end gap-1">
         <span className="font-pixel text-[10px] sm:text-xs text-gray-400 uppercase">
           Players: {totalPlayers}
         </span>
-        <button
-          onClick={handleLogout}
-          className="font-pixel text-[10px] sm:text-xs text-red-400 hover:text-red-300 uppercase transition-colors"
-        >
-          Logout
-        </button>
       </div>
     </div>
   );
