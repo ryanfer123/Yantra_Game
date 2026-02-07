@@ -179,21 +179,35 @@ export default function VisualMemory() {
       />
     ));
 
+  /* Corner-bracket decorator */
+  const Corners = ({ size = 13 }: { size?: number }) => (
+    <>
+      <div className="absolute top-0 left-0 border-t-[2.4px] border-l-[2.4px] border-white" style={{ width: size, height: size }} />
+      <div className="absolute top-0 right-0 border-t-[2.4px] border-r-[2.4px] border-white" style={{ width: size, height: size }} />
+      <div className="absolute bottom-0 left-0 border-b-[2.4px] border-l-[2.4px] border-white" style={{ width: size, height: size }} />
+      <div className="absolute bottom-0 right-0 border-b-[2.4px] border-r-[2.4px] border-white" style={{ width: size, height: size }} />
+    </>
+  );
+
   return (
     <div
       className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] select-none"
       style={{ fontFamily: "'Jura', sans-serif" }}
     >
-      {/* Background */}
-      <img
-        src="/memory-bg.png"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-      />
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-[rgba(10,10,10,0.5)] backdrop-blur-[5px]" />
+      {/* ── Background ── */}
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+        <img
+          src="/memory-bg.png"
+          alt=""
+          className="pointer-events-none min-w-[200%] min-h-[200%] object-none"
+          style={{ imageRendering: "auto" }}
+          draggable={false}
+        />
+      </div>
+      {/* Dark + blur overlay */}
+      <div className="absolute inset-0 bg-[rgba(10,10,10,0.50)] backdrop-blur-[5px]" />
 
-      {/* MAIN CONTENT */}
+      {/* ── MAIN CONTENT ── */}
       <div className="absolute inset-0 z-10 flex flex-col items-center">
         {/* Title */}
         <h1 className="font-bold text-white text-[36px] sm:text-[50px] uppercase text-center mt-6 sm:mt-[30px] tracking-wider">
@@ -205,30 +219,30 @@ export default function VisualMemory() {
           {mins}:{secs}
         </p>
 
-        {/* Score & Error Margin */}
+        {/* Score & Error Margin row */}
         <div className="w-full max-w-[1000px] px-6 flex justify-between items-center mt-2">
           {/* Score panel */}
-          <div className="relative bg-[#0a1020]/30 px-5 py-3 min-w-[180px]">
-            <div className="absolute top-0 left-0 w-[19px] h-[16px] border-t-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute top-0 right-0 w-[20px] h-[16px] border-t-[2.4px] border-r-[2.4px] border-white" />
-            <div className="absolute bottom-0 left-0 w-[19px] h-[16px] border-b-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute bottom-0 right-0 w-[20px] h-[16px] border-b-[2.4px] border-r-[2.4px] border-white" />
-            <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase text-center">
-              Score: <span className="text-[#6ec4e5]">{gamePhase === "over" ? score : "\u2014"}</span>
-            </p>
+          <div className="relative min-w-[180px]" style={{ padding: 0 }}>
+            <img src="/card-bg-score.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+            <div className="relative px-5 py-3">
+              <Corners size={16} />
+              <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase text-center">
+                Score: <span className="text-[#6ec4e5]">{gamePhase === "over" ? score : "\u2014"}</span>
+              </p>
+            </div>
           </div>
 
           {/* Error Margin panel */}
-          <div className="relative bg-[#0a1020]/30 px-5 py-3 min-w-[350px]">
-            <div className="absolute top-0 left-0 w-[19px] h-[16px] border-t-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute top-0 right-0 w-[20px] h-[16px] border-t-[2.4px] border-r-[2.4px] border-white" />
-            <div className="absolute bottom-0 left-0 w-[19px] h-[16px] border-b-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute bottom-0 right-0 w-[20px] h-[16px] border-b-[2.4px] border-r-[2.4px] border-white" />
-            <div className="flex items-center justify-center gap-4">
-              <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase whitespace-nowrap">
-                Error Margin:
-              </p>
-              <div className="flex gap-[20px]">{renderLives()}</div>
+          <div className="relative min-w-[350px]" style={{ padding: 0 }}>
+            <img src="/card-bg-error.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+            <div className="relative px-5 py-3">
+              <Corners size={16} />
+              <div className="flex items-center justify-center gap-4">
+                <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase whitespace-nowrap">
+                  Error Margin:
+                </p>
+                <div className="flex gap-[20px]">{renderLives()}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -236,30 +250,28 @@ export default function VisualMemory() {
         {/* Grid card */}
         <div className="flex-1 flex items-center justify-center w-full px-6 mt-2">
           <div
-            className="relative bg-[#0a1020]/30 p-6 sm:p-8"
-            style={{ width: gridWidth + 64 }}
+            className="relative"
+            style={{ width: gridWidth + 64, padding: 0 }}
           >
-            {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-[13px] h-[13px] border-t-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute top-0 right-0 w-[13px] h-[13px] border-t-[2.4px] border-r-[2.4px] border-white" />
-            <div className="absolute bottom-0 left-0 w-[13px] h-[13px] border-b-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute bottom-0 right-0 w-[13px] h-[13px] border-b-[2.4px] border-r-[2.4px] border-white" />
-
-            {/* CSS Grid with explicit tile sizes */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${gridSize}, ${TILE_SIZE}px)`,
-                gap: GAP,
-              }}
-            >
-              {renderGrid()}
+            <img src="/card-bg-grid.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+            <div className="relative p-6 sm:p-8">
+              <Corners size={13} />
+              {/* CSS Grid */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${gridSize}, ${TILE_SIZE}px)`,
+                  gap: GAP,
+                }}
+              >
+                {renderGrid()}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* START SCREEN */}
+      {/* ── START SCREEN ── */}
       {gamePhase === "start" && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80"
@@ -308,7 +320,7 @@ export default function VisualMemory() {
         </div>
       )}
 
-      {/* GAME OVER SCREEN */}
+      {/* ── GAME OVER ── */}
       {gamePhase === "over" && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 animate-loading-fade-in"
