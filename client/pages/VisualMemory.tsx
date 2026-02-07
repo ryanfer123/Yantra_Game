@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 
 const GAME_DURATION = 60;
 const WATCH_TIME = 1500;
-const TILE_SIZE = 80;
-const GAP = 10;
+const TILE_SIZE = 90;
+const GAP = 12;
+const MAX_GRID = 6;
+const FIXED_GRID_WIDTH = MAX_GRID * TILE_SIZE + (MAX_GRID - 1) * GAP;
 
 type TileState = "default" | "target" | "correct" | "wrong";
 
@@ -111,7 +113,6 @@ export default function VisualMemory() {
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
   const secs = String(timeLeft % 60).padStart(2, "0");
   const score = calcScore(level);
-  const gridWidth = gridSize * TILE_SIZE + (gridSize - 1) * GAP;
 
   const renderGrid = () => {
     const tiles: JSX.Element[] = [];
@@ -227,7 +228,7 @@ export default function VisualMemory() {
             <div className="relative px-5 py-3">
               <Corners size={16} />
               <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase text-center">
-                Score: <span className="text-[#6ec4e5]">{gamePhase === "over" ? score : "\u2014"}</span>
+                Score: <span className="text-[#6ec4e5]">{gamePhase === "start" ? "\u2014" : score}</span>
               </p>
             </div>
           </div>
@@ -247,14 +248,14 @@ export default function VisualMemory() {
           </div>
         </div>
 
-        {/* Grid card */}
-        <div className="flex-1 flex items-center justify-center w-full px-6 mt-2">
+        {/* Grid card — fixed size container so it never shifts */}
+        <div className="flex-1 flex flex-col items-center justify-center w-full px-6 mt-2">
           <div
             className="relative"
-            style={{ width: gridWidth + 64, padding: 0 }}
+            style={{ width: FIXED_GRID_WIDTH + 64, height: FIXED_GRID_WIDTH + 64, padding: 0 }}
           >
             <img src="/card-bg-grid.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
-            <div className="relative p-6 sm:p-8">
+            <div className="relative w-full h-full flex items-center justify-center">
               <Corners size={13} />
               {/* CSS Grid */}
               <div
@@ -268,6 +269,13 @@ export default function VisualMemory() {
               </div>
             </div>
           </div>
+
+          {/* Memorize text — below the grid card */}
+          {gamePhase === "watching" && (
+            <p className="font-bold text-[#6ec4e5] text-xl sm:text-2xl uppercase tracking-widest animate-pulse mt-4">
+              Memorize the pattern...
+            </p>
+          )}
         </div>
       </div>
 
@@ -308,15 +316,6 @@ export default function VisualMemory() {
           >
             {"\u2190 BACK TO BASE"}
           </button>
-        </div>
-      )}
-
-      {/* WATCHING OVERLAY */}
-      {gamePhase === "watching" && (
-        <div className="absolute inset-0 z-20 flex items-start justify-center pt-[45%] pointer-events-none">
-          <p className="font-bold text-[#6ec4e5] text-xl sm:text-2xl uppercase tracking-widest animate-pulse">
-            Memorize the pattern...
-          </p>
         </div>
       )}
 
