@@ -64,7 +64,7 @@ export default function Play() {
       />
 
       {/* Civilian character – move with W A S D */}
-      <CivilianCharacter />
+      <CivilianCharacter onPortalEnter={() => navigate("/aim-trainer")} />
 
       {/* Top status bar – health */}
       <div className="relative z-10 mx-auto mt-4 w-[92%] max-w-5xl">

@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 240.481 240.481" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Globe">
+<path id="BG" d="M120.24 240.231C186.509 240.231 240.231 186.509 240.231 120.24C240.231 53.9715 186.509 0.25 120.24 0.25C53.9715 0.25 0.25 53.9715 0.25 120.24C0.25 186.509 53.9715 240.231 120.24 240.231Z" fill="var(--fill-0, white)" fill-opacity="0.25" stroke="var(--stroke-0, white)" stroke-width="0.5" stroke-miterlimit="10"/>
+<path id="BG_2" d="M120.24 240.231C186.509 240.231 240.231 186.509 240.231 120.24C240.231 53.9715 186.509 0.25 120.24 0.25C53.9715 0.25 0.25 53.9715 0.25 120.24C0.25 186.509 53.9715 240.231 120.24 240.231Z" fill="var(--fill-0, #0F0F0F)" fill-opacity="0.5"/>
+</g>
+</svg>

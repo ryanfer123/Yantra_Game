@@ -54,12 +54,11 @@ const RECT_OBSTACLES = [
 // Central portal – tighter ellipse to allow walking around it
 const PORTAL = { cx: 50, cy: 55, rx: 17, ry: 17 };
 
-/** Check if a point (character centre) collides with any obstacle */
-function collides(cx: number, cy: number): boolean {
+/** Check if a point (character centre) collides with any rectangular obstacle */
+function collidesRect(cx: number, cy: number): boolean {
   const halfW = HB_W / 2;
   const halfH = HB_H / 2;
 
-  // Check rectangular obstacles
   for (const ob of RECT_OBSTACLES) {
     if (
       cx + halfW > ob.x1 &&
@@ -71,19 +70,25 @@ function collides(cx: number, cy: number): boolean {
     }
   }
 
-  // Check elliptical portal
+  return false;
+}
+
+/** Check if a point is inside the portal ellipse */
+function insidePortal(cx: number, cy: number): boolean {
+  const halfW = HB_W / 2;
+  const halfH = HB_H / 2;
   const edx = (cx - PORTAL.cx) / (PORTAL.rx + halfW);
   const edy = (cy - PORTAL.cy) / (PORTAL.ry + halfH);
-  if (edx * edx + edy * edy < 1) {
-    return true;
-  }
-
-  return false;
+  return edx * edx + edy * edy < 1;
 }
 
 type Direction = "left" | "right";
 
-export default function CivilianCharacter() {
+interface Props {
+  onPortalEnter?: () => void;
+}
+
+export default function CivilianCharacter({ onPortalEnter }: Props) {
   const [pos, setPos] = useState({ x: 50, y: 15 }); // start near the door (top-center corridor)
   const [facing, setFacing] = useState<Direction>("right");
   const facingRef = useRef<Direction>("right");
@@ -113,6 +118,10 @@ export default function CivilianCharacter() {
   }, []);
 
   // Movement loop with collision
+  const portalTriggeredRef = useRef(false);
+  const onPortalEnterRef = useRef(onPortalEnter);
+  onPortalEnterRef.current = onPortalEnter;
+
   useEffect(() => {
     let raf: number;
     const tick = () => {
@@ -149,15 +158,22 @@ export default function CivilianCharacter() {
           nx = Math.max(2, Math.min(98, nx));
           ny = Math.max(5, Math.min(98, ny));
 
-          if (!collides(nx, ny)) return { x: nx, y: ny };
+          // Check portal entry
+          if (insidePortal(nx, ny) && !portalTriggeredRef.current) {
+            portalTriggeredRef.current = true;
+            onPortalEnterRef.current?.();
+            return prev; // don't move into portal
+          }
+
+          if (!collidesRect(nx, ny)) return { x: nx, y: ny };
 
           // Slide along X only
           const slideX = { x: nx, y: prev.y };
-          if (!collides(slideX.x, slideX.y)) return slideX;
+          if (!collidesRect(slideX.x, slideX.y) && !insidePortal(slideX.x, slideX.y)) return slideX;
 
           // Slide along Y only
           const slideY = { x: prev.x, y: ny };
-          if (!collides(slideY.x, slideY.y)) return slideY;
+          if (!collidesRect(slideY.x, slideY.y) && !insidePortal(slideY.x, slideY.y)) return slideY;
 
           // Blocked in both axes
           return prev;

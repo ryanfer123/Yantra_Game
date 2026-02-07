@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 297 123.271" fill="none" xmlns="http://www.w3.org/2000/svg">
+<foreignObject x="-8" y="-8" width="313" height="139.271"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(4px);clip-path:url(#bgblur_0_25_1602_clip_path);height:100%;width:100%"></div></foreignObject><g id="Card / BG" opacity="0.3" data-figma-bg-blur-radius="8">
+<mask id="path-1-inside-1_25_1602" fill="white">
+<path d="M297 123.271H0V0H297V123.271Z"/>
+</mask>
+<path d="M297 123.271H0V0H297V123.271Z" fill="var(--fill-0, #081333)"/>
+<path d="M297 123.271V125.271H299V123.271H297ZM0 123.271H-2V125.271H0V123.271ZM0 0V-2H-2V0H0ZM297 0H299V-2H297V0ZM297 123.271V121.271H0V123.271V125.271H297V123.271ZM0 123.271H2V0H0H-2V123.271H0ZM0 0V2H297V0V-2H0V0ZM297 0H295V123.271H297H299V0H297Z" fill="var(--stroke-0, #374151)" mask="url(#path-1-inside-1_25_1602)"/>
+</g>
+<defs>
+<clipPath id="bgblur_0_25_1602_clip_path" transform="translate(8 8)"><path d="M297 123.271H0V0H297V123.271Z"/>
+</clipPath></defs>
+</svg>
