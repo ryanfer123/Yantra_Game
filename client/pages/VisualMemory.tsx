@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 const GAME_DURATION = 60;
 const WATCH_TIME = 1500;
-const TILE_SIZE = 90;
-const GAP = 12;
+const TILE_SIZE = 65;
+const GAP = 8;
 const MAX_GRID = 6;
 const FIXED_GRID_WIDTH = MAX_GRID * TILE_SIZE + (MAX_GRID - 1) * GAP;
 
