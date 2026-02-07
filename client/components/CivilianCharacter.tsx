@@ -31,28 +31,28 @@ const HB_H = 4; // % of viewport height
  * The central portal uses an ellipse collision.
  */
 
-// Rectangular obstacles
+// Rectangular obstacles – tuned to allow paths around the portal
 const RECT_OBSTACLES = [
   // Top wall / health bar
   { x1: 0, y1: 0, x2: 100, y2: 8 },
   // Left console/machine (upper-left)
-  { x1: 0, y1: 8, x2: 35, y2: 38 },
+  { x1: 0, y1: 8, x2: 30, y2: 33 },
   // Right console/panels + pipes (upper-right)
-  { x1: 62, y1: 8, x2: 100, y2: 30 },
-  // Left battery panels
-  { x1: 7, y1: 55, x2: 26, y2: 77 },
-  // Right battery panels
-  { x1: 78, y1: 55, x2: 97, y2: 77 },
+  { x1: 64, y1: 8, x2: 100, y2: 28 },
+  // Left battery panels (shifted left + smaller to open left path)
+  { x1: 5, y1: 56, x2: 22, y2: 73 },
+  // Right battery panels (shifted right to open right path)
+  { x1: 80, y1: 56, x2: 97, y2: 73 },
   // Bottom-left pipes
-  { x1: 0, y1: 76, x2: 8, y2: 100 },
+  { x1: 0, y1: 80, x2: 12, y2: 100 },
   // Bottom-right pipes
-  { x1: 68, y1: 85, x2: 100, y2: 100 },
+  { x1: 72, y1: 88, x2: 100, y2: 100 },
   // Bottom edge
   { x1: 0, y1: 97, x2: 100, y2: 100 },
 ];
 
-// Central portal – elliptical collision (tighter to match actual ring)
-const PORTAL = { cx: 50, cy: 53, rx: 22, ry: 24 };
+// Central portal – tighter ellipse to allow walking around it
+const PORTAL = { cx: 50, cy: 55, rx: 17, ry: 17 };
 
 /** Check if a point (character centre) collides with any obstacle */
 function collides(cx: number, cy: number): boolean {

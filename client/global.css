@@ -177,3 +177,17 @@
     opacity: 0.4;
   }
 }
+
+/* WASD hint fade-out */
+.animate-fade-out {
+  animation: fade-out 4s ease-in-out forwards;
+}
+
+@keyframes fade-out {
+  0%, 60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

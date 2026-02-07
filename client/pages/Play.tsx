@@ -38,7 +38,14 @@ export default function Play() {
   const round = state?.currentRound ?? 1;
   const role = state?.playerRole ?? "citizen";
   const trustScore = state?.playerTrustScore ?? 0;
-  const totalPlayers = state?.totalPlayers ?? 0;
+  const totalPlayers = state?.totalPlayers ?? (user ? 1 : 0);
+
+  // WASD hint – show briefly then fade
+  const [showHint, setShowHint] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHint(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (authLoading) {
     return (
@@ -103,6 +110,23 @@ export default function Play() {
           Players: {totalPlayers}
         </span>
       </div>
+
+      {/* WASD controls hint */}
+      {showHint && (
+        <div className="absolute z-30 inset-0 flex items-center justify-center pointer-events-none animate-fade-out">
+          <div className="bg-black/70 border border-pixel-cyan/50 px-6 py-4 flex flex-col items-center gap-2">
+            <div className="flex gap-1">
+              <span className="font-pixel text-sm text-pixel-cyan border border-pixel-cyan/40 bg-pixel-cyan/10 w-8 h-8 flex items-center justify-center">W</span>
+            </div>
+            <div className="flex gap-1">
+              <span className="font-pixel text-sm text-pixel-cyan border border-pixel-cyan/40 bg-pixel-cyan/10 w-8 h-8 flex items-center justify-center">A</span>
+              <span className="font-pixel text-sm text-pixel-cyan border border-pixel-cyan/40 bg-pixel-cyan/10 w-8 h-8 flex items-center justify-center">S</span>
+              <span className="font-pixel text-sm text-pixel-cyan border border-pixel-cyan/40 bg-pixel-cyan/10 w-8 h-8 flex items-center justify-center">D</span>
+            </div>
+            <span className="font-pixel text-[10px] text-gray-400 mt-1">USE KEYS TO MOVE</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
