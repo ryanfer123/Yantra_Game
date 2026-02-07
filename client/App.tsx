@@ -10,6 +10,7 @@ import Game from "./pages/Game";
 import Play from "./pages/Play";
 import AimTrainer from "./pages/AimTrainer";
 import TypingTest from "./pages/TypingTest";
+import VisualMemory from "./pages/VisualMemory";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ export const App = () => (
           <Route path="/play" element={<Play />} />
           <Route path="/aim-trainer" element={<AimTrainer />} />
           <Route path="/typing-test" element={<TypingTest />} />
+          <Route path="/visual-memory" element={<VisualMemory />} />
           <Route path="/signup" element={<Signup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

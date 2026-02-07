@@ -7,7 +7,7 @@ import { refreshToken } from "@/lib/firebase";
 
 const labScene = "/lab-scene.png";
 
-const ALL_GAMES = ["/aim-trainer", "/typing-test"];
+const ALL_GAMES = ["/aim-trainer", "/typing-test", "/visual-memory"];
 
 export default function Play() {
   const navigate = useNavigate();
