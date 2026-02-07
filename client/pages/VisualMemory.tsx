@@ -1,22 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-const GAME_DURATION = 45; // seconds
-const WATCH_TIME = 1500; // ms to memorize pattern
+const GAME_DURATION = 60;
+const WATCH_TIME = 1500;
+const TILE_SIZE = 80;
+const GAP = 10;
 
-// ─── Tile type ───
 type TileState = "default" | "target" | "correct" | "wrong";
 
-// ─── Score calc (same as Python: base 60 + level*4, capped 60-100) ───
 function calcScore(level: number): number {
-  const raw = 60 + level * 4;
-  return Math.max(60, Math.min(100, raw));
+  return Math.max(60, Math.min(100, 60 + level * 4));
 }
 
 export default function VisualMemory() {
   const navigate = useNavigate();
 
-  // Game state
   const [gamePhase, setGamePhase] = useState<"start" | "watching" | "playing" | "over">("start");
   const [level, setLevel] = useState(1);
   const [lives, setLives] = useState(3);
@@ -25,196 +23,178 @@ export default function VisualMemory() {
   const [targets, setTargets] = useState<Set<string>>(new Set());
   const [clicked, setClicked] = useState<Set<string>>(new Set());
   const [wrong, setWrong] = useState<Set<string>>(new Set());
-  const startTimeRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
-  const watchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const watchRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Compute grid + targets for a given level (matches Python logic)
   const generateLevel = useCallback((lvl: number) => {
     const gs = Math.min(6, 3 + Math.floor(lvl / 3));
     const numTargets = Math.min(gs * gs - 1, 2 + lvl);
-
-    const newTargets = new Set<string>();
-    while (newTargets.size < numTargets) {
+    const t = new Set<string>();
+    while (t.size < numTargets) {
       const r = Math.floor(Math.random() * gs);
       const c = Math.floor(Math.random() * gs);
-      newTargets.add(`${r},${c}`);
+      t.add(`${r},${c}`);
     }
-
     setGridSize(gs);
-    setTargets(newTargets);
+    setTargets(t);
     setClicked(new Set());
     setWrong(new Set());
   }, []);
 
-  // Start game
   const startGame = useCallback(() => {
     setLevel(1);
     setLives(3);
     setTimeLeft(GAME_DURATION);
-    startTimeRef.current = Date.now();
     generateLevel(1);
     setGamePhase("watching");
 
-    // Start countdown
     timerRef.current = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
           setGamePhase("over");
           return 0;
         }
-        return t - 1;
+        return prev - 1;
       });
     }, 1000);
 
-    // After watch time, switch to playing
-    watchTimeoutRef.current = setTimeout(() => {
-      setGamePhase("playing");
-    }, WATCH_TIME);
+    watchRef.current = setTimeout(() => setGamePhase("playing"), WATCH_TIME);
   }, [generateLevel]);
 
-  // Cleanup timers on unmount or game over
   useEffect(() => {
     if (gamePhase === "over") {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (watchTimeoutRef.current) clearTimeout(watchTimeoutRef.current);
+      if (watchRef.current) clearTimeout(watchRef.current);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (watchTimeoutRef.current) clearTimeout(watchTimeoutRef.current);
+      if (watchRef.current) clearTimeout(watchRef.current);
     };
   }, [gamePhase]);
 
-  // Advance to next level
-  const advanceLevel = useCallback((nextLevel: number) => {
-    generateLevel(nextLevel);
-    setGamePhase("watching");
-    watchTimeoutRef.current = setTimeout(() => {
-      setGamePhase("playing");
-    }, WATCH_TIME);
-  }, [generateLevel]);
+  const advanceLevel = useCallback(
+    (nextLvl: number) => {
+      generateLevel(nextLvl);
+      setGamePhase("watching");
+      watchRef.current = setTimeout(() => setGamePhase("playing"), WATCH_TIME);
+    },
+    [generateLevel]
+  );
 
-  // Handle tile click
-  const handleTileClick = useCallback((r: number, c: number) => {
-    if (gamePhase !== "playing") return;
-    const key = `${r},${c}`;
-    if (clicked.has(key) || wrong.has(key)) return;
+  const handleTileClick = useCallback(
+    (r: number, c: number) => {
+      if (gamePhase !== "playing") return;
+      const key = `${r},${c}`;
+      if (clicked.has(key) || wrong.has(key)) return;
 
-    if (targets.has(key)) {
-      const newClicked = new Set(clicked);
-      newClicked.add(key);
-      setClicked(newClicked);
-
-      // Check level complete
-      if (newClicked.size === targets.size) {
-        const nextLevel = level + 1;
-        setLevel(nextLevel);
-        advanceLevel(nextLevel);
+      if (targets.has(key)) {
+        const nc = new Set(clicked);
+        nc.add(key);
+        setClicked(nc);
+        if (nc.size === targets.size) {
+          const next = level + 1;
+          setLevel(next);
+          advanceLevel(next);
+        }
+      } else {
+        const nw = new Set(wrong);
+        nw.add(key);
+        setWrong(nw);
+        const nl = lives - 1;
+        setLives(nl);
+        if (nl <= 0) setGamePhase("over");
       }
-    } else {
-      const newWrong = new Set(wrong);
-      newWrong.add(key);
-      setWrong(newWrong);
-      const newLives = lives - 1;
-      setLives(newLives);
-      if (newLives <= 0) {
-        setGamePhase("over");
-      }
-    }
-  }, [gamePhase, clicked, wrong, targets, level, lives, advanceLevel]);
+    },
+    [gamePhase, clicked, wrong, targets, level, lives, advanceLevel]
+  );
 
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
   const secs = String(timeLeft % 60).padStart(2, "0");
   const score = calcScore(level);
+  const gridWidth = gridSize * TILE_SIZE + (gridSize - 1) * GAP;
 
-  // Render grid
   const renderGrid = () => {
-    const rows = [];
+    const tiles: JSX.Element[] = [];
     for (let r = 0; r < gridSize; r++) {
-      const cols = [];
       for (let c = 0; c < gridSize; c++) {
         const key = `${r},${c}`;
         const isTarget = targets.has(key);
         const isClicked = clicked.has(key);
         const isWrong = wrong.has(key);
 
-        let tileState: TileState = "default";
-        if (gamePhase === "watching" && isTarget) {
-          tileState = "target";
-        } else if (isClicked) {
-          tileState = "correct";
-        } else if (isWrong) {
-          tileState = "wrong";
-        }
+        let state: TileState = "default";
+        if (gamePhase === "watching" && isTarget) state = "target";
+        else if (isClicked) state = "correct";
+        else if (isWrong) state = "wrong";
 
-        const bgColor =
-          tileState === "target" ? "bg-[#6ec4e5]" :
-          tileState === "correct" ? "bg-[#6ec4e5]" :
-          tileState === "wrong" ? "bg-[#e54444]" :
-          "bg-[#24272c]";
+        const bg =
+          state === "target" || state === "correct"
+            ? "#6ec4e5"
+            : state === "wrong"
+            ? "#e54444"
+            : "#24272c";
 
-        const isClickable = gamePhase === "playing" && !isClicked && !isWrong;
+        const shadow =
+          state === "target" || state === "correct"
+            ? "-4px -4px 10px 0px rgba(110,196,229,0.15), 4px 4px 10px 0px rgba(0,0,0,0.25), inset 2.4px 2.4px 2.4px 0px rgba(255,255,255,0.25)"
+            : state === "wrong"
+            ? "-4px -4px 10px 0px rgba(229,68,68,0.15), 4px 4px 10px 0px rgba(0,0,0,0.25), inset 2.4px 2.4px 2.4px 0px rgba(255,255,255,0.15)"
+            : "-6px -6px 12px 0px rgba(255,255,255,0.05), 6px 6px 12px 0px rgba(0,0,0,0.25), inset 2.4px 2.4px 2.4px 0px rgba(255,255,255,0.15)";
 
-        cols.push(
+        const clickable = gamePhase === "playing" && !isClicked && !isWrong;
+
+        tiles.push(
           <button
             key={key}
-            disabled={!isClickable}
+            disabled={!clickable}
             onClick={() => handleTileClick(r, c)}
-            className={`
-              ${bgColor} rounded-[14.4px] border-[0.6px] border-[#111214]
-              transition-all duration-150 aspect-square w-full
-              ${isClickable ? "cursor-pointer hover:brightness-110 active:scale-95" : "cursor-default"}
-            `}
             style={{
-              boxShadow:
-                tileState === "target" || tileState === "correct"
-                  ? "-4px -4px 10px 0px rgba(110,196,229,0.15), 4px 4px 10px 0px rgba(0,0,0,0.25), inset 2.4px 2.4px 2.4px 0px rgba(255,255,255,0.25)"
-                  : tileState === "wrong"
-                  ? "-4px -4px 10px 0px rgba(229,68,68,0.15), 4px 4px 10px 0px rgba(0,0,0,0.25), inset 2.4px 2.4px 2.4px 0px rgba(255,255,255,0.15)"
-                  : "-6px -6px 12px 0px rgba(255,255,255,0.25), 6px 6px 12px 0px rgba(0,0,0,0.25), inset 2.4px 2.4px 2.4px 0px rgba(255,255,255,0.25)",
+              width: TILE_SIZE,
+              height: TILE_SIZE,
+              backgroundColor: bg,
+              borderRadius: 14.4,
+              border: "0.6px solid #111214",
+              boxShadow: shadow,
+              cursor: clickable ? "pointer" : "default",
+              transition: "all 150ms",
             }}
+            className={clickable ? "hover:brightness-110 active:scale-95" : ""}
           />
         );
       }
-      rows.push(
-        <div key={r} className="flex gap-[10px]">
-          {cols}
-        </div>
-      );
     }
-    return rows;
+    return tiles;
   };
 
-  // Lives indicator: 3 cyan bars
-  const renderLives = () => {
-    return Array.from({ length: 3 }).map((_, i) => (
+  const renderLives = () =>
+    Array.from({ length: 3 }).map((_, i) => (
       <div
         key={i}
-        className={`h-[17px] w-[69px] rounded-sm transition-all duration-300 ${
-          i < lives ? "bg-[#6ec4e5]" : "bg-[#24272c]"
-        }`}
+        className="rounded-sm transition-all duration-300"
+        style={{
+          height: 17,
+          width: 69,
+          backgroundColor: i < lives ? "#6ec4e5" : "#24272c",
+        }}
       />
     ));
-  };
 
   return (
     <div
       className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] select-none"
       style={{ fontFamily: "'Jura', sans-serif" }}
     >
-      {/* Background image (blurred) */}
+      {/* Background */}
       <img
-        src="/aim-bg-new.png"
+        src="/memory-bg.png"
         alt=""
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        style={{ filter: "blur(6px) brightness(0.5)" }}
       />
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-[rgba(10,10,10,0.5)] backdrop-blur-[5px]" />
 
-      {/* ═══ MAIN CONTENT ═══ */}
+      {/* MAIN CONTENT */}
       <div className="absolute inset-0 z-10 flex flex-col items-center">
-
         {/* Title */}
         <h1 className="font-bold text-white text-[36px] sm:text-[50px] uppercase text-center mt-6 sm:mt-[30px] tracking-wider">
           Code Calibration
@@ -225,7 +205,7 @@ export default function VisualMemory() {
           {mins}:{secs}
         </p>
 
-        {/* Score & Error Margin panels */}
+        {/* Score & Error Margin */}
         <div className="w-full max-w-[1000px] px-6 flex justify-between items-center mt-2">
           {/* Score panel */}
           <div className="relative bg-[#0a1020]/30 px-5 py-3 min-w-[180px]">
@@ -234,11 +214,11 @@ export default function VisualMemory() {
             <div className="absolute bottom-0 left-0 w-[19px] h-[16px] border-b-[2.4px] border-l-[2.4px] border-white" />
             <div className="absolute bottom-0 right-0 w-[20px] h-[16px] border-b-[2.4px] border-r-[2.4px] border-white" />
             <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase text-center">
-              Score: <span className="text-[#6ec4e5]">{gamePhase === "over" ? score : "—"}</span>
+              Score: <span className="text-[#6ec4e5]">{gamePhase === "over" ? score : "\u2014"}</span>
             </p>
           </div>
 
-          {/* Error Margin panel (lives) */}
+          {/* Error Margin panel */}
           <div className="relative bg-[#0a1020]/30 px-5 py-3 min-w-[350px]">
             <div className="absolute top-0 left-0 w-[19px] h-[16px] border-t-[2.4px] border-l-[2.4px] border-white" />
             <div className="absolute top-0 right-0 w-[20px] h-[16px] border-t-[2.4px] border-r-[2.4px] border-white" />
@@ -248,61 +228,99 @@ export default function VisualMemory() {
               <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase whitespace-nowrap">
                 Error Margin:
               </p>
-              <div className="flex gap-[20px]">
-                {renderLives()}
-              </div>
+              <div className="flex gap-[20px]">{renderLives()}</div>
             </div>
           </div>
         </div>
 
         {/* Grid card */}
         <div className="flex-1 flex items-center justify-center w-full px-6 mt-2">
-          <div className="relative bg-[#0a1020]/30 p-6 sm:p-8" style={{ maxWidth: gridSize * 90 + 64 }}>
+          <div
+            className="relative bg-[#0a1020]/30 p-6 sm:p-8"
+            style={{ width: gridWidth + 64 }}
+          >
             {/* Corner brackets */}
             <div className="absolute top-0 left-0 w-[13px] h-[13px] border-t-[2.4px] border-l-[2.4px] border-white" />
             <div className="absolute top-0 right-0 w-[13px] h-[13px] border-t-[2.4px] border-r-[2.4px] border-white" />
             <div className="absolute bottom-0 left-0 w-[13px] h-[13px] border-b-[2.4px] border-l-[2.4px] border-white" />
             <div className="absolute bottom-0 right-0 w-[13px] h-[13px] border-b-[2.4px] border-r-[2.4px] border-white" />
 
-            <div className="flex flex-col gap-[10px]">
+            {/* CSS Grid with explicit tile sizes */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${gridSize}, ${TILE_SIZE}px)`,
+                gap: GAP,
+              }}
+            >
               {renderGrid()}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ─── START SCREEN ─── */}
+      {/* START SCREEN */}
       {gamePhase === "start" && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 pointer-events-auto" style={{ fontFamily: "'Jura', sans-serif" }}>
-          <div className="absolute inset-0 pointer-events-none opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(110,196,229,0.08) 2px, rgba(110,196,229,0.08) 4px)' }} />
+        <div
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80"
+          style={{ fontFamily: "'Jura', sans-serif" }}
+        >
+          <div
+            className="absolute inset-0 pointer-events-none opacity-10"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(110,196,229,0.08) 2px, rgba(110,196,229,0.08) 4px)",
+            }}
+          />
           <p className="text-[#6ec4e5]/60 text-xs uppercase tracking-[0.3em] mb-4">// MISSION BRIEFING</p>
-          <h2 className="font-bold text-3xl sm:text-4xl text-[#6ec4e5] uppercase tracking-widest mb-3">MACHINE LEARNING</h2>
+          <h2 className="font-bold text-3xl sm:text-4xl text-[#6ec4e5] uppercase tracking-widest mb-3">
+            MACHINE LEARNING
+          </h2>
           <p className="text-white/50 text-sm uppercase tracking-wider mb-2">
-            PROTOCOL: MEMORIZE THE PATTERN FOR <span className="text-[#6ec4e5] font-bold">{GAME_DURATION}s</span>
+            {"PROTOCOL: MEMORIZE THE PATTERN \u2022 "}
+            <span className="text-[#6ec4e5] font-bold">60s</span>
+            {" TIMER"}
           </p>
-          <p className="text-white/30 text-xs uppercase tracking-wider mb-8">REPLICATE THE HIGHLIGHTED TILES FROM MEMORY</p>
-          <button onClick={startGame} className="px-8 py-3 border-2 border-[#6ec4e5] text-[#6ec4e5] font-bold text-lg uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors">
+          <p className="text-white/30 text-xs uppercase tracking-wider mb-8">
+            REPLICATE THE HIGHLIGHTED TILES FROM MEMORY
+          </p>
+          <button
+            onClick={startGame}
+            className="px-8 py-3 border-2 border-[#6ec4e5] text-[#6ec4e5] font-bold text-lg uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors"
+          >
             START CALIBRATION
           </button>
-          <button onClick={() => navigate("/play")} className="mt-4 px-6 py-2 border border-white/20 text-white/40 font-bold text-xs uppercase hover:text-white/70 transition-colors">
-            ← BACK TO BASE
+          <button
+            onClick={() => navigate("/play")}
+            className="mt-4 px-6 py-2 border border-white/20 text-white/40 font-bold text-xs uppercase hover:text-white/70 transition-colors"
+          >
+            {"\u2190 BACK TO BASE"}
           </button>
         </div>
       )}
 
-      {/* ─── WATCHING OVERLAY ─── */}
+      {/* WATCHING OVERLAY */}
       {gamePhase === "watching" && (
         <div className="absolute inset-0 z-20 flex items-start justify-center pt-[45%] pointer-events-none">
           <p className="font-bold text-[#6ec4e5] text-xl sm:text-2xl uppercase tracking-widest animate-pulse">
-            👀 Memorize the pattern...
+            Memorize the pattern...
           </p>
         </div>
       )}
 
-      {/* ─── GAME OVER SCREEN ─── */}
+      {/* GAME OVER SCREEN */}
       {gamePhase === "over" && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 pointer-events-auto animate-loading-fade-in" style={{ fontFamily: "'Jura', sans-serif" }}>
-          <div className="absolute inset-0 pointer-events-none opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(110,196,229,0.08) 2px, rgba(110,196,229,0.08) 4px)' }} />
+        <div
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 animate-loading-fade-in"
+          style={{ fontFamily: "'Jura', sans-serif" }}
+        >
+          <div
+            className="absolute inset-0 pointer-events-none opacity-10"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(110,196,229,0.08) 2px, rgba(110,196,229,0.08) 4px)",
+            }}
+          />
           <div className="absolute top-[30%] left-0 right-0 h-px bg-[#6ec4e5]/20" />
           <div className="absolute top-[70%] left-0 right-0 h-px bg-[#6ec4e5]/20" />
 
@@ -325,13 +343,17 @@ export default function VisualMemory() {
           </div>
 
           <p className="text-white/50 text-sm uppercase tracking-wider mb-8">
-            STATUS : <span className={`font-bold ${score > 75 ? 'text-green-400' : 'text-yellow-400'}`}>
-              {score > 75 ? 'AUTHORITY APPROVED' : 'TRAINING REQUIRED'}
+            {"STATUS : "}
+            <span className={"font-bold " + (score > 75 ? "text-green-400" : "text-yellow-400")}>
+              {score > 75 ? "AUTHORITY APPROVED" : "TRAINING REQUIRED"}
             </span>
           </p>
 
           <div className="flex gap-4">
-            <button onClick={() => navigate("/play")} className="px-8 py-3 border-2 border-[#6ec4e5] text-[#6ec4e5] font-bold text-sm uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors">
+            <button
+              onClick={() => navigate("/play")}
+              className="px-8 py-3 border-2 border-[#6ec4e5] text-[#6ec4e5] font-bold text-sm uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors"
+            >
               RETURN TO BASE
             </button>
           </div>
