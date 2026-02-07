@@ -22,10 +22,17 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ hd: "vitstudent.ac.in" });
 
-/** Sign in with Google popup. Stores the ID token in localStorage for API calls. */
+/** Sign in with Google popup. Only allows @vitstudent.ac.in emails. */
 export async function signInWithGoogle(): Promise<User> {
   const result = await signInWithPopup(auth, googleProvider);
+  const email = result.user.email ?? "";
+  if (!email.endsWith("@vitstudent.ac.in")) {
+    await fbSignOut(auth);
+    localStorage.removeItem("authToken");
+    throw new Error("Only VIT student emails (@vitstudent.ac.in) are allowed.");
+  }
   const idToken = await result.user.getIdToken();
   localStorage.setItem("authToken", idToken);
   localStorage.setItem("playerName", result.user.displayName ?? "Player");
