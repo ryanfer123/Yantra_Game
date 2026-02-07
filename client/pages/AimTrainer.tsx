@@ -53,25 +53,38 @@ export default function AimTrainer() {
     return () => clearInterval(id);
   }, []);
 
-  // ── Audio bars (randomize every 15s) ──
+  // ── Audio bars (draggable sliders) ──
   const [bars, setBars] = useState(() =>
     Array.from({ length: 9 }, () => 20 + Math.random() * 60)
   );
-  useEffect(() => {
-    const id = setInterval(() => {
-      setBars((prev) => {
-        const next = [...prev];
-        // move 2-3 random bars
-        const count = 2 + Math.floor(Math.random() * 2);
-        for (let i = 0; i < count; i++) {
-          const idx = Math.floor(Math.random() * next.length);
-          next[idx] = 20 + Math.random() * 60;
-        }
-        return next;
-      });
-    }, 15000);
-    return () => clearInterval(id);
-  }, []);
+  const draggingBar = useRef<number | null>(null);
+  const barsContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleBarPointerDown = (idx: number, e: React.PointerEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    draggingBar.current = idx;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handleBarPointerMove = (e: React.PointerEvent) => {
+    if (draggingBar.current === null || !barsContainerRef.current) return;
+    e.stopPropagation();
+    const row = barsContainerRef.current.children[draggingBar.current] as HTMLElement;
+    if (!row) return;
+    const rect = row.getBoundingClientRect();
+    const x = Math.max(0, Math.min(e.clientX - rect.left, 200));
+    const pct = (x / 200) * 80;
+    setBars((prev) => {
+      const next = [...prev];
+      next[draggingBar.current!] = Math.max(5, pct);
+      return next;
+    });
+  };
+
+  const handleBarPointerUp = () => {
+    draggingBar.current = null;
+  };
 
   // ── Radio messages (cycle like F1 radio) ──
   const radioMessages = [
@@ -300,30 +313,55 @@ export default function AimTrainer() {
         </div>
       </div>
 
-      {/* ─── RIGHT MID: Audio bars ─── */}
-      <div className="absolute right-8 top-[52%] z-10 flex flex-col gap-1">
+      {/* ─── RIGHT MID: Audio bars (draggable sliders) ─── */}
+      <div
+        ref={barsContainerRef}
+        className="absolute right-8 top-[52%] z-10 flex flex-col gap-1 cursor-ew-resize"
+        onPointerMove={handleBarPointerMove}
+        onPointerUp={handleBarPointerUp}
+        onPointerLeave={handleBarPointerUp}
+      >
         {bars.map((w, i) => (
-          <div key={i} className="flex items-center h-4 gap-1">
-            <div
-              className="h-3 bg-[#6ec4e5]/10 border border-[#6ec4e5]/20"
-              style={{ width: 120, transition: "all 1s" }}
-            />
-            <div
-              className="h-3 bg-[#6ec4e5]"
-              style={{
-                width: `${w}px`,
-                transition: "width 1s ease-in-out",
-                opacity: 0.6 + Math.random() * 0.4,
-              }}
-            />
+          <div
+            key={i}
+            className="flex items-center h-5 touch-none"
+            onPointerDown={(e) => handleBarPointerDown(i, e)}
+          >
+            <div className="relative h-3 bg-[#6ec4e5]/10 border border-[#6ec4e5]/20" style={{ width: 200 }}>
+              <div
+                className="absolute top-0 left-0 h-full bg-[#6ec4e5]"
+                style={{
+                  width: `${w}%`,
+                  transition: draggingBar.current === i ? 'none' : 'width 0.3s ease-out',
+                  opacity: 0.7,
+                }}
+              />
+              {/* Drag handle */}
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white/80"
+                style={{ left: `${w}%`, transform: 'translate(-50%, -50%)' }}
+              />
+            </div>
           </div>
         ))}
       </div>
 
       {/* ─── RIGHT BOTTOM: Radio message card ─── */}
       <div className="absolute right-8 bottom-8 z-10">
-        <div className="border border-white/30 bg-[#0a1428]/60 px-5 py-3 w-56">
-          <img src="/aim-chart.svg" alt="" className="w-28 h-10 mb-2 opacity-70 mx-auto" />
+        <div className="border border-white/30 bg-[#0a1428]/60 px-5 py-4 w-64 h-28 flex flex-col items-center justify-center">
+          {/* Animated audio wave */}
+          <div className="flex items-end justify-center gap-[2px] h-8 mb-3">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div
+                key={i}
+                className="w-[2px] bg-[#6ec4e5]/70 animate-audio-bar"
+                style={{
+                  animationDelay: `${i * 0.08}s`,
+                  animationDuration: `${0.4 + Math.random() * 0.6}s`,
+                }}
+              />
+            ))}
+          </div>
           <p
             className="font-bold text-xs text-[#6ec4e5] uppercase text-center animate-radio-fade"
             key={radioIdx}
