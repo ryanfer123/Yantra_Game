@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 const GRID_SIZE = 5;
-const GAME_DURATION = 45; // seconds
+const GAME_DURATION = 60; // seconds
 
 function randomPos(): [number, number] {
   return [

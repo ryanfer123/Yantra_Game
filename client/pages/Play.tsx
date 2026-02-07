@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import CivilianCharacter from "@/components/CivilianCharacter";
 import { useGameState } from "@/hooks/use-game-state";
@@ -7,10 +7,33 @@ import { refreshToken } from "@/lib/firebase";
 
 const labScene = "/lab-scene.png";
 
+const ALL_GAMES = ["/aim-trainer", "/typing-test"];
+
 export default function Play() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+
+  // Random game selection with no repeats
+  const handlePortalEnter = useCallback(() => {
+    const playedRaw = localStorage.getItem("playedGames");
+    let played: string[] = playedRaw ? JSON.parse(playedRaw) : [];
+
+    // Filter out already-played games
+    let available = ALL_GAMES.filter((g) => !played.includes(g));
+
+    // If all played, reset the pool
+    if (available.length === 0) {
+      played = [];
+      available = [...ALL_GAMES];
+    }
+
+    // Pick random from available
+    const chosen = available[Math.floor(Math.random() * available.length)];
+    played.push(chosen);
+    localStorage.setItem("playedGames", JSON.stringify(played));
+    navigate(chosen);
+  }, [navigate]);
 
   // Auth guard – redirect to login if not signed in
   useEffect(() => {
@@ -86,7 +109,7 @@ export default function Play() {
         />
 
         {/* Civilian character – move with W A S D */}
-        <CivilianCharacter onPortalEnter={() => navigate("/aim-trainer")} />
+        <CivilianCharacter onPortalEnter={handlePortalEnter} />
 
       {/* HUD – round, role, trust score */}
       <div className="absolute z-10 top-2 left-4 sm:left-8 flex flex-col gap-1">
