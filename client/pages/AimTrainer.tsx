@@ -351,7 +351,13 @@ export default function AimTrainer() {
       {/* ─── TASK POPUP (placeholder) ─── */}
       {showTaskPopup && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 pointer-events-auto">
-          <div className="border-2 border-[#6ec4e5] bg-[#0a1428]/90 p-8 max-w-md w-full mx-4">
+          <div className="relative border-2 border-[#6ec4e5] bg-[#0a1428]/90 p-8 max-w-md w-full mx-4">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowTaskPopup(false); }}
+              className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center text-[#6ec4e5] border border-[#6ec4e5]/40 hover:bg-[#6ec4e5]/20 transition-colors font-bold text-sm"
+            >
+              ✕
+            </button>
             <h2 className="font-bold text-xl text-[#6ec4e5] uppercase text-center mb-4">
               MISSION TASK
             </h2>
@@ -371,7 +377,7 @@ export default function AimTrainer() {
       {/* ─── BACK TO PORTAL button ─── */}
       <button
         onClick={() => navigate("/play")}
-        className="absolute bottom-[15%] left-8 z-30 px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto"
+        className="absolute bottom-[28%] left-8 z-30 px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto"
       >
         ← EXIT
       </button>
