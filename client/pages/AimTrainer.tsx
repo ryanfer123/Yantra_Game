@@ -317,7 +317,7 @@ export default function AimTrainer() {
                           : ""
                       }`}
                     >
-                      {isTarget && <span className="drop-shadow-[0_0_12px_rgba(110,196,229,0.6)]">👾</span>}
+                      {isTarget && <img src="/glitch-sprite.png" alt="glitch" className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-contain drop-shadow-[0_0_12px_rgba(255,50,50,0.6)] animate-pulse" />}
                     </button>
                   );
                 })}
