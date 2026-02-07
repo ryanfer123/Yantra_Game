@@ -53,38 +53,24 @@ export default function AimTrainer() {
     return () => clearInterval(id);
   }, []);
 
-  // ── Audio bars (draggable sliders) ──
+  // ── Audio bars (auto-animating sliders) ──
   const [bars, setBars] = useState(() =>
     Array.from({ length: 9 }, () => 20 + Math.random() * 60)
   );
-  const draggingBar = useRef<number | null>(null);
-  const barsContainerRef = useRef<HTMLDivElement>(null);
-
-  const handleBarPointerDown = (idx: number, e: React.PointerEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    draggingBar.current = idx;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const handleBarPointerMove = (e: React.PointerEvent) => {
-    if (draggingBar.current === null || !barsContainerRef.current) return;
-    e.stopPropagation();
-    const row = barsContainerRef.current.children[draggingBar.current] as HTMLElement;
-    if (!row) return;
-    const rect = row.getBoundingClientRect();
-    const x = Math.max(0, Math.min(e.clientX - rect.left, 200));
-    const pct = (x / 200) * 80;
-    setBars((prev) => {
-      const next = [...prev];
-      next[draggingBar.current!] = Math.max(5, pct);
-      return next;
-    });
-  };
-
-  const handleBarPointerUp = () => {
-    draggingBar.current = null;
-  };
+  useEffect(() => {
+    const id = setInterval(() => {
+      setBars((prev) => {
+        const next = [...prev];
+        const count = 2 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < count; i++) {
+          const idx = Math.floor(Math.random() * next.length);
+          next[idx] = 10 + Math.random() * 70;
+        }
+        return next;
+      });
+    }, 2000);
+    return () => clearInterval(id);
+  }, []);
 
   // ── Radio messages (cycle like F1 radio) ──
   const radioMessages = [
@@ -93,8 +79,16 @@ export default function AimTrainer() {
     "LEAVE NO GLITCH ALIVE",
   ];
   const [radioIdx, setRadioIdx] = useState(0);
+  const [radioActive, setRadioActive] = useState(true);
   useEffect(() => {
-    const id = setInterval(() => setRadioIdx((i) => (i + 1) % 3), 5000);
+    const id = setInterval(() => {
+      // Brief silence between messages
+      setRadioActive(false);
+      setTimeout(() => {
+        setRadioIdx((i) => (i + 1) % 3);
+        setRadioActive(true);
+      }, 800);
+    }, 5000);
     return () => clearInterval(id);
   }, []);
 
@@ -265,33 +259,27 @@ export default function AimTrainer() {
           {/* Middle Right: Ammo/Shield + Audio bars */}
           <div className="flex flex-col items-end justify-start gap-3 sm:gap-4 shrink-0">
             {/* Ammo & Shield */}
-            <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-6 py-3 sm:py-4">
+            <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-6 py-3 sm:py-4 w-48 sm:w-56 lg:w-64">
               <p className="font-bold text-sm sm:text-base uppercase">
                 <span className="text-white">AMMO LEFT :</span>{" "}
-                <span className="text-[#6ec4e5]">{ammo}</span>
+                <span className="text-[#6ec4e5] inline-block w-12 sm:w-14 text-right tabular-nums">{ammo}</span>
               </p>
               <p className="font-bold text-sm sm:text-base uppercase mt-1">
                 <span className="text-white">SHIELD :</span>{" "}
-                <span className="text-[#6ec4e5]">{shield}</span>
+                <span className="text-[#6ec4e5] inline-block w-12 sm:w-14 text-right tabular-nums">{shield}</span>
               </p>
             </div>
 
-            {/* Audio bars (draggable sliders) */}
-            <div
-              ref={barsContainerRef}
-              className="flex flex-col gap-1 cursor-ew-resize pointer-events-auto"
-              onPointerMove={handleBarPointerMove}
-              onPointerUp={handleBarPointerUp}
-              onPointerLeave={handleBarPointerUp}
-            >
+            {/* Audio bars (auto-animating sliders) */}
+            <div className="flex flex-col gap-1">
               {bars.map((w, i) => (
-                <div key={i} className="flex items-center h-5 touch-none" onPointerDown={(e) => handleBarPointerDown(i, e)}>
+                <div key={i} className="flex items-center h-5">
                   <div className="relative h-3 bg-[#6ec4e5]/10 border border-[#6ec4e5]/20 w-32 sm:w-40 lg:w-[200px]">
                     <div
                       className="absolute top-0 left-0 h-full bg-[#6ec4e5]"
-                      style={{ width: `${w}%`, transition: draggingBar.current === i ? 'none' : 'width 0.3s ease-out', opacity: 0.7 }}
+                      style={{ width: `${w}%`, transition: 'width 1.5s ease-in-out', opacity: 0.7 }}
                     />
-                    <div className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white/80" style={{ left: `${w}%`, transform: 'translate(-50%, -50%)' }} />
+                    <div className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white/80" style={{ left: `${w}%`, transition: 'left 1.5s ease-in-out', transform: 'translate(-50%, -50%)' }} />
                   </div>
                 </div>
               ))}
@@ -336,8 +324,13 @@ export default function AimTrainer() {
               {Array.from({ length: 24 }).map((_, i) => (
                 <div
                   key={i}
-                  className="w-[2px] bg-[#6ec4e5]/70 animate-audio-bar"
-                  style={{ animationDelay: `${i * 0.08}s`, animationDuration: `${0.4 + Math.random() * 0.6}s` }}
+                  className={`w-[2px] bg-[#6ec4e5]/70 ${radioActive ? 'animate-audio-bar' : ''}`}
+                  style={{
+                    animationDelay: radioActive ? `${i * 0.06}s` : undefined,
+                    animationDuration: radioActive ? `${0.6 + Math.sin(i) * 0.3}s` : undefined,
+                    height: radioActive ? undefined : '3px',
+                    transition: 'height 0.3s ease',
+                  }}
                 />
               ))}
             </div>
