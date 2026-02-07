@@ -529,14 +529,8 @@ export default function AimTrainer() {
 
           <div className="flex gap-4">
             <button
-              onClick={startGame}
-              className="px-6 py-2 border-2 border-[#6ec4e5] text-[#6ec4e5] font-bold text-sm uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors"
-            >
-              RE-CALIBRATE
-            </button>
-            <button
               onClick={() => navigate("/play")}
-              className="px-6 py-2 border border-white/30 text-white/60 font-bold text-sm uppercase tracking-wider hover:bg-white/10 transition-colors"
+              className="px-8 py-3 border-2 border-[#6ec4e5] text-[#6ec4e5] font-bold text-sm uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors"
             >
               RETURN TO BASE
             </button>
