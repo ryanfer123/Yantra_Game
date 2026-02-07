@@ -47,8 +47,12 @@ export default function VisualMemory() {
     setTimeLeft(GAME_DURATION);
     generateLevel(1);
     setGamePhase("watching");
+  }, [generateLevel]);
 
-    timerRef.current = setInterval(() => {
+  /* Countdown timer — runs while watching or playing */
+  useEffect(() => {
+    if (gamePhase !== "watching" && gamePhase !== "playing") return;
+    const id = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           setGamePhase("over");
@@ -57,26 +61,22 @@ export default function VisualMemory() {
         return prev - 1;
       });
     }, 1000);
+    timerRef.current = id;
+    return () => clearInterval(id);
+  }, [gamePhase]);
 
-    watchRef.current = setTimeout(() => setGamePhase("playing"), WATCH_TIME);
-  }, [generateLevel]);
-
+  /* Watch-phase timeout — auto-transition to playing */
   useEffect(() => {
-    if (gamePhase === "over") {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (watchRef.current) clearTimeout(watchRef.current);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (watchRef.current) clearTimeout(watchRef.current);
-    };
+    if (gamePhase !== "watching") return;
+    const id = setTimeout(() => setGamePhase("playing"), WATCH_TIME);
+    watchRef.current = id;
+    return () => clearTimeout(id);
   }, [gamePhase]);
 
   const advanceLevel = useCallback(
     (nextLvl: number) => {
       generateLevel(nextLvl);
       setGamePhase("watching");
-      watchRef.current = setTimeout(() => setGamePhase("playing"), WATCH_TIME);
     },
     [generateLevel]
   );
@@ -195,15 +195,15 @@ export default function VisualMemory() {
       style={{ fontFamily: "'Jura', sans-serif" }}
     >
       {/* ── Background ── */}
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-        <img
-          src="/memory-bg.png"
-          alt=""
-          className="pointer-events-none min-w-[200%] min-h-[200%] object-none"
-          style={{ imageRendering: "auto" }}
-          draggable={false}
-        />
-      </div>
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: "url(/memory-bg.png)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
       {/* Dark + blur overlay */}
       <div className="absolute inset-0 bg-[rgba(10,10,10,0.50)] backdrop-blur-[5px]" />
 
