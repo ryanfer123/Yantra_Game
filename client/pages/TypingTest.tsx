@@ -115,27 +115,15 @@ export default function TypingTest() {
     if (gamePhase === "playing") textareaRef.current?.focus();
   }, [gamePhase]);
 
-  // Render paragraph with background highlights per the Figma design
+  // Render paragraph with text color: cyan correct, red incorrect, gray untyped
   const renderHighlightedParagraph = () => {
     if (!paragraph) return null;
     return paragraph.split("").map((char, i) => {
+      let colorClass = "text-[#9a9a9a]";
       if (i < typedText.length) {
-        const isCorrect = typedText[i] === char;
-        return (
-          <span
-            key={i}
-            className="text-[#9a9a9a]"
-            style={{
-              backgroundColor: isCorrect
-                ? "rgba(0, 255, 255, 0.54)"
-                : "rgba(244, 6, 6, 0.47)",
-            }}
-          >
-            {char}
-          </span>
-        );
+        colorClass = typedText[i] === char ? "text-[#6ec4e5]" : "text-[#e54444]";
       }
-      return <span key={i} className="text-[#9a9a9a]">{char}</span>;
+      return <span key={i} className={colorClass}>{char}</span>;
     });
   };
 
@@ -164,9 +152,9 @@ export default function TypingTest() {
     }
     return (
       <div
-        className={`relative rounded-[10px] flex items-center justify-center transition-all duration-75 ${
+        className={`relative rounded-[10px] flex items-center justify-center transition-all duration-100 ${
           wide || "w-[60px] sm:w-[65px]"
-        } h-[48px] sm:h-[55px] bg-[#097CFB] border border-[#0C223C]/60`}
+        } h-[48px] sm:h-[55px] bg-[#6ec4e5]/20 border border-[#6ec4e5]/60 shadow-[0_0_12px_rgba(110,196,229,0.35)]`}
       >
         {sub && (
           <span className="absolute top-1 left-0 right-0 text-center text-[10px] sm:text-[11px] text-white/40 font-medium">{sub}</span>
@@ -273,7 +261,7 @@ export default function TypingTest() {
             <Key isSpecial label="Ctrl" />
             <Key isSpecial icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>} />
             <Key isSpecial icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>} />
-            <div className={`rounded-[10px] ${activeKey === " " ? "bg-[#097CFB]" : ""} border border-transparent w-[280px] sm:w-[390px] h-[48px] sm:h-[55px] transition-all duration-75`} />
+            <div className={`rounded-[10px] ${activeKey === " " ? "bg-[#6ec4e5]/20 border-[#6ec4e5]/60 shadow-[0_0_12px_rgba(110,196,229,0.35)]" : "border-transparent"} border w-[280px] sm:w-[390px] h-[48px] sm:h-[55px] transition-all duration-100`} />
             <Key isSpecial label=".?123" />
             <Key isSpecial icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>} />
           </div>
