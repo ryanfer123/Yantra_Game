@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 const GAME_DURATION = 60;
-const WATCH_TIME = 1500;
+const WATCH_TIME = 2250;
 const TILE_SIZE = 65;
 const GAP = 8;
 const MAX_GRID = 6;
