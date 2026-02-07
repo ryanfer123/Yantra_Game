@@ -18,7 +18,7 @@ const FRAMES = {
 
 const CHAR_W = 96;
 const CHAR_H = 120;
-const MOVE_SPEED = 4;
+const MOVE_SPEED = 2.5;
 const ANIM_INTERVAL = 200; // ms per walk frame
 
 // Character hitbox in % (smaller than sprite for forgiving feel)
