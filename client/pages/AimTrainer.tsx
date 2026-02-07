@@ -387,7 +387,7 @@ export default function AimTrainer() {
       {/* ─── BACK TO PORTAL button ─── */}
       <button
         onClick={() => navigate("/play")}
-        className="absolute bottom-[28%] left-8 z-30 px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto"
+        className="absolute top-4 right-[290px] z-30 px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto"
       >
         ← EXIT
       </button>
