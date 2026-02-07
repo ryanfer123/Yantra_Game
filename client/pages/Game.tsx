@@ -67,10 +67,9 @@ export default function Game() {
         {/* Back button */}
         <button
           onClick={() => navigate("/")}
-          className="mt-8 sm:mt-12 px-4 py-2 font-pixel text-xs sm:text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+          className="mt-8 sm:mt-12 px-5 py-2 bg-black/50 border border-pixel-cyan/40 font-pixel text-xs sm:text-sm text-pixel-cyan hover:bg-pixel-cyan/20 hover:text-white transition-colors uppercase tracking-wider"
         >
-          <span className="text-base leading-none">←</span>
-          <span>BACK</span>
+          BACK
         </button>
       </div>
     </div>
