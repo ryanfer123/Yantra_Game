@@ -11,43 +11,37 @@ const PARAGRAPHS = [
   "Machine learning models thrive on large datasets and iterative training cycles. Each epoch refines the model weights, gradually improving accuracy and reducing loss. The process requires substantial computational resources but yields powerful predictive capabilities when properly calibrated.",
 ];
 
-// Simple sequence matcher (port of Python's difflib.SequenceMatcher ratio)
+// Keyboard layout for decorative display
+const KB_ROW1 = ["q","w","e","r","t","y","u","i","o","p"];
+const KB_ROW1_SUB = ["1","2","3","4","5","6","7","8","9","0"];
+const KB_ROW2 = ["a","s","d","f","g","h","j","k","l"];
+const KB_ROW2_SUB = ["@","#","€","&","*","(",")","`","\""];
+const KB_ROW3 = ["z","x","c","v","b","n","m",",","."];
+const KB_ROW3_SUB = ["%","-","+","=","/",";",":","!","?"];
+
 function sequenceMatchRatio(a: string, b: string): number {
   if (a.length === 0 && b.length === 0) return 1;
   if (a.length === 0 || b.length === 0) return 0;
-
   const shorter = a.length <= b.length ? a : b;
   const longer = a.length > b.length ? a : b;
-
   let matches = 0;
   const used = new Array(longer.length).fill(false);
-
   for (let i = 0; i < shorter.length; i++) {
-    // Try exact position first
     if (i < longer.length && !used[i] && shorter[i] === longer[i]) {
-      matches++;
-      used[i] = true;
-      continue;
+      matches++; used[i] = true; continue;
     }
-    // Search nearby
     const searchStart = Math.max(0, i - 5);
     const searchEnd = Math.min(longer.length, i + 6);
-    let found = false;
     for (let j = searchStart; j < searchEnd; j++) {
       if (!used[j] && shorter[i] === longer[j]) {
-        matches++;
-        used[j] = true;
-        found = true;
-        break;
+        matches++; used[j] = true; break;
       }
     }
   }
-
   return (2 * matches) / (a.length + b.length);
 }
 
 function calcTypingScore(wpm: number, accuracy: number): number {
-  // wpm_score: maps 20–80 WPM to 0–40 bonus points
   const wpmScore = Math.max(0, Math.min(40, ((wpm - 20) / 60) * 40));
   const score = 60 + wpmScore * (accuracy / 100);
   return Math.max(60, Math.min(100, Math.round(score)));
@@ -56,7 +50,6 @@ function calcTypingScore(wpm: number, accuracy: number): number {
 export default function TypingTest() {
   const navigate = useNavigate();
 
-  // ── Game states ──
   const [gamePhase, setGamePhase] = useState<"start" | "playing" | "over">("start");
   const [paragraph, setParagraph] = useState("");
   const [typedText, setTypedText] = useState("");
@@ -66,28 +59,26 @@ export default function TypingTest() {
   const [accuracy, setAccuracy] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // ── Timer ──
+  // Track which key was just pressed for keyboard highlight
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const activeKeyTimeout = useRef<ReturnType<typeof setTimeout>>();
+
   useEffect(() => {
     if (gamePhase !== "playing") return;
     const id = setInterval(() => {
       setTimeLeft((t) => {
-        if (t <= 1) {
-          setGamePhase("over");
-          return 0;
-        }
+        if (t <= 1) { setGamePhase("over"); return 0; }
         return t - 1;
       });
     }, 1000);
     return () => clearInterval(id);
   }, [gamePhase]);
 
-  // ── Calculate results when game ends ──
   useEffect(() => {
     if (gamePhase !== "over") return;
     const elapsed = (Date.now() - startTime) / 1000;
     const minutes = elapsed / 60;
-    const charCount = typedText.length;
-    const calculatedWpm = minutes > 0 ? Math.round((charCount / 5) / minutes) : 0;
+    const calculatedWpm = minutes > 0 ? Math.round((typedText.length / 5) / minutes) : 0;
     const calculatedAccuracy = Math.round(sequenceMatchRatio(typedText, paragraph) * 100);
     setWpm(calculatedWpm);
     setAccuracy(calculatedAccuracy);
@@ -96,7 +87,6 @@ export default function TypingTest() {
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
   const secs = String(timeLeft % 60).padStart(2, "0");
 
-  // ── Start game ──
   const startGame = useCallback(() => {
     const idx = Math.floor(Math.random() * PARAGRAPHS.length);
     setParagraph(PARAGRAPHS[idx]);
@@ -107,88 +97,30 @@ export default function TypingTest() {
     setTimeout(() => textareaRef.current?.focus(), 100);
   }, []);
 
-  // ── Radar sweep ──
-  const [sweepAngle, setSweepAngle] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setSweepAngle((a) => (a + 3) % 360), 30);
-    return () => clearInterval(id);
+  // Handle typing + key highlight
+  const handleTyping = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setTypedText(val);
+    const lastChar = val.length > 0 ? val[val.length - 1].toLowerCase() : null;
+    if (lastChar) {
+      setActiveKey(lastChar);
+      if (activeKeyTimeout.current) clearTimeout(activeKeyTimeout.current);
+      activeKeyTimeout.current = setTimeout(() => setActiveKey(null), 150);
+    }
   }, []);
 
-  // ── Audio bars ──
-  const [bars, setBars] = useState(() =>
-    Array.from({ length: 9 }, () => 20 + Math.random() * 60)
-  );
-  useEffect(() => {
-    const id = setInterval(() => {
-      setBars((prev) => {
-        const next = [...prev];
-        const count = 2 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < count; i++) {
-          const idx = Math.floor(Math.random() * next.length);
-          next[idx] = 10 + Math.random() * 70;
-        }
-        return next;
-      });
-    }, 2000);
-    return () => clearInterval(id);
-  }, []);
-
-  // ── Radio messages ──
-  const radioMessages = [
-    "CALIBRATING NEURAL LINK",
-    "SYNCING PROTOCOL LAYER",
-    "DATA STREAM ACTIVE",
-  ];
-  const [radioIdx, setRadioIdx] = useState(0);
-  const [radioActive, setRadioActive] = useState(true);
-  useEffect(() => {
-    const id = setInterval(() => {
-      setRadioActive(false);
-      setTimeout(() => {
-        setRadioIdx((i) => (i + 1) % 3);
-        setRadioActive(true);
-      }, 800);
-    }, 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  // ── Flash text ──
-  const [flashBright, setFlashBright] = useState(false);
-  useEffect(() => {
-    const flash = () => { setFlashBright(true); setTimeout(() => setFlashBright(false), 600); };
-    const id = setInterval(flash, 3000 + Math.random() * 2000);
-    return () => clearInterval(id);
-  }, []);
-
-  // ── Cursor position ──
-  const [cursor, setCursor] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    setCursor({
-      x: Math.round(((e.clientX - rect.left) / rect.width) * 100),
-      y: Math.round(((e.clientY - rect.top) / rect.height) * 100),
-    });
-  }, []);
-
-  // ── Render highlighted reference text ──
+  // Highlighted reference paragraph
   const renderHighlightedParagraph = () => {
     if (!paragraph) return null;
     return paragraph.split("").map((char, i) => {
-      let color = "text-white/60"; // not yet typed
+      let color = "text-[#9a9a9a]";
       if (i < typedText.length) {
         color = typedText[i] === char ? "text-green-400" : "text-red-400";
       }
-      return (
-        <span key={i} className={color}>
-          {char}
-        </span>
-      );
+      return <span key={i} className={color}>{char}</span>;
     });
   };
 
-  // ── Loading screen state ──
   const [showLoading, setShowLoading] = useState(false);
   useEffect(() => {
     if (gamePhase === "over" && !showLoading) setShowLoading(true);
@@ -196,241 +128,133 @@ export default function TypingTest() {
 
   const score = calcTypingScore(wpm, accuracy);
 
+  // Keyboard key component
+  const Key = ({ label, sub, wide, icon }: { label?: string; sub?: string; wide?: string; icon?: React.ReactNode }) => {
+    const isActive = label && activeKey === label.toLowerCase();
+    return (
+      <div
+        className={`relative rounded-[10px] flex items-center justify-center transition-colors duration-100 ${
+          wide || "w-[60px] sm:w-[65px]"
+        } h-[48px] sm:h-[55px] ${
+          isActive ? "bg-[#097CFB]" : "bg-[#141518]"
+        } border border-[#0C223C]/60`}
+      >
+        {sub && (
+          <span className="absolute top-1 left-0 right-0 text-center text-[10px] sm:text-[11px] text-white/40 font-medium">{sub}</span>
+        )}
+        {icon ? (
+          <div className="text-white/70">{icon}</div>
+        ) : (
+          <span className={`text-white text-[18px] sm:text-[20px] font-normal ${sub ? "mt-2" : ""}`}>{label}</span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div
-      ref={containerRef}
       className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] select-none"
-      onMouseMove={handleMouseMove}
       style={{ fontFamily: "'Jura', sans-serif" }}
     >
-      {/* Background */}
-      <img src="/aim-bg-new.png" alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
-      <img src="/aim-grid.svg" alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-15" />
+      {/* Background image (blurred) */}
+      <img
+        src="/aim-bg-new.png"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ filter: "blur(6px) brightness(0.5)" }}
+      />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-[rgba(10,10,10,0.5)] backdrop-blur-[5px]" />
 
-      {/* ═══ FLEX HUD LAYOUT ═══ */}
-      <div className="absolute inset-0 z-10 flex flex-col p-4 sm:p-6 lg:p-8 pointer-events-none">
+      {/* ═══ MAIN CONTENT ═══ */}
+      <div className="absolute inset-0 z-10 flex flex-col items-center">
 
-        {/* ─── TOP ROW ─── */}
-        <div className="flex items-start justify-between gap-4 shrink-0">
-          {/* Top Left: EXIT + Coordinates */}
-          <div className="flex items-start gap-3 pointer-events-auto">
-            <button
-              onClick={() => navigate("/play")}
-              className="px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors shrink-0"
-            >
-              ← EXIT
-            </button>
-            <div>
-              <div className="font-bold text-[#6ec4e5] text-xs sm:text-sm uppercase leading-snug">
-                <p>23.2139 N</p>
-                <p>58.932 W</p>
-                <p><span className="text-white">ALT :</span> <span className="text-[#6ec4e5]">9000m</span></p>
-              </div>
-              <div className="font-bold text-xs sm:text-sm uppercase leading-snug mt-2 sm:mt-4">
-                <p><span className="text-white">LOCATION :</span></p>
-                <p className="text-[#6ec4e5]">XX HORIZON</p>
-                <p className="text-[#6ec4e5]">FRONT II</p>
-              </div>
-            </div>
-          </div>
+        {/* Title */}
+        <h1 className="font-bold text-white text-[36px] sm:text-[50px] uppercase text-center mt-6 sm:mt-[30px] tracking-wider">
+          Code Calibration
+        </h1>
 
-          {/* Top Center: Title + Timer */}
-          <div className="text-center shrink-0">
-            <h1 className="font-bold text-white text-xl sm:text-3xl uppercase tracking-[0.15em]">
-              CODE CALIBRATION
-            </h1>
-            <p className="font-bold text-[#6ec4e5] text-xl sm:text-3xl mt-1">
-              {mins}:{secs}
-            </p>
-          </div>
+        {/* Timer */}
+        <p className="font-bold text-[#6ec4e5] text-[30px] sm:text-[40px] uppercase text-center mt-1">
+          {mins}:{secs}
+        </p>
 
-          {/* Top Right: Radar */}
-          <div className="flex items-start gap-3">
-            <div className="w-28 h-28 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-full border-2 border-[#6ec4e5]/30 bg-[#0a1a2a]/70 relative overflow-hidden shrink-0">
-              <div className="absolute inset-[25%] rounded-full border border-[#6ec4e5]/15" />
-              <div className="absolute inset-[40%] rounded-full border border-[#6ec4e5]/15" />
-              <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#6ec4e5]/15" />
-              <div className="absolute left-0 right-0 top-1/2 h-px bg-[#6ec4e5]/15" />
-              <div
-                className="absolute top-1/2 left-1/2 w-1/2 h-px origin-left"
-                style={{
-                  transform: `rotate(${sweepAngle}deg)`,
-                  background: "linear-gradient(90deg, #6ec4e5 0%, transparent 100%)",
-                  boxShadow: "0 0 12px 3px rgba(110,196,229,0.3)",
-                }}
-              />
-              <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6ec4e5]" />
-            </div>
-          </div>
-        </div>
+        {/* Two cards side by side */}
+        <div className="flex gap-3 sm:gap-6 w-full max-w-[1300px] px-6 sm:px-[80px] mt-4 sm:mt-8 flex-1 min-h-0 max-h-[340px]">
+          {/* Left Card: Reference Paragraph */}
+          <div className="flex-1 relative bg-[#0a1020]/50 overflow-hidden">
+            {/* Corner brackets (white, 2.4px, ~13px) */}
+            <div className="absolute top-0 left-0 w-[13px] h-[13px] border-t-[2.4px] border-l-[2.4px] border-white" />
+            <div className="absolute top-0 right-0 w-[13px] h-[13px] border-t-[2.4px] border-r-[2.4px] border-white" />
+            <div className="absolute bottom-0 left-0 w-[13px] h-[13px] border-b-[2.4px] border-l-[2.4px] border-white" />
+            <div className="absolute bottom-0 right-0 w-[13px] h-[13px] border-b-[2.4px] border-r-[2.4px] border-white" />
 
-        {/* ─── MIDDLE ROW (flex-1) ─── */}
-        <div className="flex-1 flex items-stretch justify-between gap-4 min-h-0 py-2 sm:py-4">
-          {/* Middle Left: Globe + FOR THE O.S. */}
-          <div className="flex flex-col items-center justify-start gap-2 sm:gap-4 shrink-0 w-28 sm:w-36 lg:w-44">
-            <div className="relative w-20 h-20 sm:w-28 sm:h-28 lg:w-36 lg:h-36">
-              <div className="absolute -top-1 -left-1 w-4 h-4 border-t border-l border-[#6ec4e5]/40" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 border-t border-r border-[#6ec4e5]/40" />
-              <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b border-l border-[#6ec4e5]/40" />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b border-r border-[#6ec4e5]/40" />
-              <svg viewBox="0 0 200 200" className="w-full h-full opacity-40" fill="none" stroke="#6ec4e5" strokeWidth="0.8">
-                <circle cx="100" cy="100" r="85" strokeWidth="1" />
-                <ellipse cx="100" cy="60" rx="78" ry="8" />
-                <ellipse cx="100" cy="80" rx="83" ry="6" />
-                <ellipse cx="100" cy="100" rx="85" ry="4" strokeWidth="1" />
-                <ellipse cx="100" cy="120" rx="83" ry="6" />
-                <ellipse cx="100" cy="140" rx="78" ry="8" />
-                <ellipse cx="100" cy="100" rx="4" ry="85" strokeWidth="1" />
-                <ellipse cx="100" cy="100" rx="42" ry="85" />
-                <ellipse cx="100" cy="100" rx="74" ry="85" />
-              </svg>
-            </div>
-            <p className="text-[#6ec4e5]/40 text-[10px] font-bold uppercase tracking-widest">SECTOR MAP</p>
-
-            <div
-              className="text-[10px] sm:text-[11px] font-bold uppercase leading-[1.6]"
-              style={{ opacity: flashBright ? 1 : 0.35, transition: "opacity 0.3s", textShadow: flashBright ? '0 0 8px #6ec4e5, 0 0 16px #6ec4e5' : 'none' }}
-            >
-              <div className="flex gap-4 sm:gap-6">
-                <div className="text-center">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <p key={i}><span className="text-white">FOR THE</span>{" "}<span className="text-[#6ec4e5]">O.S.</span></p>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Middle Center: Typing area (two cards side by side) */}
-          <div className="flex-1 flex items-center justify-center pointer-events-auto">
-            {gamePhase === "playing" && (
-              <div className="flex gap-4 w-full max-w-5xl h-full max-h-[340px]">
-                {/* Left Card: Reference Paragraph */}
-                <div className="flex-1 relative border border-[#6ec4e5]/30 bg-[#0a1428]/60 overflow-hidden">
-                  {/* Corner brackets */}
-                  <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#6ec4e5]/60" />
-                  <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#6ec4e5]/60" />
-                  <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#6ec4e5]/60" />
-                  <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#6ec4e5]/60" />
-
-                  <div className="p-4 sm:p-6 h-full overflow-y-auto">
-                    <p className="text-[#6ec4e5]/40 text-[10px] uppercase tracking-wider mb-2">// REFERENCE TEXT</p>
-                    <p className="text-sm sm:text-base leading-relaxed font-medium">
-                      {renderHighlightedParagraph()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Right Card: Typing Area */}
-                <div className="flex-1 relative border border-[#6ec4e5]/30 bg-[#0a1428]/60 overflow-hidden">
-                  {/* Corner brackets */}
-                  <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#6ec4e5]/60" />
-                  <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#6ec4e5]/60" />
-                  <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#6ec4e5]/60" />
-                  <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#6ec4e5]/60" />
-
-                  <div className="p-4 sm:p-6 h-full flex flex-col">
-                    <p className="text-[#6ec4e5]/40 text-[10px] uppercase tracking-wider mb-2">// TYPE HERE</p>
-                    <textarea
-                      ref={textareaRef}
-                      value={typedText}
-                      onChange={(e) => setTypedText(e.target.value)}
-                      className="flex-1 w-full bg-transparent text-white/90 text-sm sm:text-base leading-relaxed font-medium resize-none outline-none caret-[#6ec4e5] placeholder:text-white/20"
-                      placeholder="Start typing..."
-                      spellCheck={false}
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Middle Right: Audio bars */}
-          <div className="flex flex-col items-end justify-start gap-3 sm:gap-4 shrink-0">
-            <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-6 py-3 sm:py-4 w-48 sm:w-56 lg:w-64">
-              <p className="font-bold text-sm sm:text-base uppercase">
-                <span className="text-white">CHARS :</span>{" "}
-                <span className="text-[#6ec4e5] inline-block w-12 sm:w-14 text-right tabular-nums">{typedText.length}</span>
-              </p>
-              <p className="font-bold text-sm sm:text-base uppercase mt-1">
-                <span className="text-white">WORDS :</span>{" "}
-                <span className="text-[#6ec4e5] inline-block w-12 sm:w-14 text-right tabular-nums">
-                  {typedText.trim() ? typedText.trim().split(/\s+/).length : 0}
-                </span>
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              {bars.map((w, i) => (
-                <div key={i} className="flex items-center h-5">
-                  <div className="relative h-3 bg-[#6ec4e5]/10 border border-[#6ec4e5]/20 w-32 sm:w-40 lg:w-[200px]">
-                    <div
-                      className="absolute top-0 left-0 h-full bg-[#6ec4e5]"
-                      style={{ width: `${w}%`, transition: 'width 1.5s ease-in-out', opacity: 0.7 }}
-                    />
-                    <div className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white/80" style={{ left: `${w}%`, transition: 'left 1.5s ease-in-out', transform: 'translate(-50%, -50%)' }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ─── BOTTOM ROW ─── */}
-        <div className="flex items-end justify-between gap-4 shrink-0">
-          {/* Bottom Left: Vitals + Coordinates */}
-          <div className="flex flex-col gap-2 sm:gap-3">
-            <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-6 py-2 sm:py-3">
-              <p className="font-bold text-sm sm:text-base uppercase">
-                <span className="text-white">VITALS :</span>{" "}
-                <span className="text-[#6ec4e5]">GOOD</span>
-              </p>
-            </div>
-            <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-6 py-3 sm:py-4">
-              <p className="font-bold text-xs sm:text-sm text-white uppercase">Coordinates</p>
-              <p className="font-bold text-xs sm:text-sm uppercase mt-1">
-                <span className="text-white">X :</span>{" "}
-                <span className="text-[#6ec4e5]">{cursor.x}</span>
-              </p>
-              <p className="font-bold text-xs sm:text-sm uppercase">
-                <span className="text-white">Y :</span>{" "}
-                <span className="text-[#6ec4e5]">{cursor.y}</span>
+            <div className="p-5 sm:p-7 h-full overflow-y-auto">
+              <p className="text-[#9a9a9a] text-[18px] sm:text-[24px] leading-[1.4] font-bold">
+                {gamePhase === "playing" ? renderHighlightedParagraph() : (
+                  <span className="text-[#9a9a9a]">Reference paragraph is written here</span>
+                )}
               </p>
             </div>
           </div>
 
-          {/* Bottom Center: Progress */}
-          <div className="text-center">
-            <p className="font-bold text-lg sm:text-2xl uppercase">
-              <span className="text-white">PROGRESS :</span>{" "}
-              <span className="text-[#6ec4e5]">
-                {paragraph ? Math.min(100, Math.round((typedText.length / paragraph.length) * 100)) : 0}%
-              </span>
-            </p>
-          </div>
+          {/* Right Card: Typing Area */}
+          <div className="flex-1 relative bg-[#0a1020]/50 overflow-hidden">
+            {/* Corner brackets */}
+            <div className="absolute top-0 left-0 w-[13px] h-[13px] border-t-[2.4px] border-l-[2.4px] border-white" />
+            <div className="absolute top-0 right-0 w-[13px] h-[13px] border-t-[2.4px] border-r-[2.4px] border-white" />
+            <div className="absolute bottom-0 left-0 w-[13px] h-[13px] border-b-[2.4px] border-l-[2.4px] border-white" />
+            <div className="absolute bottom-0 right-0 w-[13px] h-[13px] border-b-[2.4px] border-r-[2.4px] border-white" />
 
-          {/* Bottom Right: Radio message card */}
-          <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-5 py-3 sm:py-4 w-48 sm:w-56 lg:w-64 h-24 sm:h-28 flex flex-col items-center justify-center">
-            <div className="flex items-end justify-center gap-[2px] h-6 sm:h-8 mb-2 sm:mb-3">
-              {Array.from({ length: 24 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-[2px] bg-[#6ec4e5]/70 ${radioActive ? 'animate-audio-bar' : ''}`}
-                  style={{
-                    animationDelay: radioActive ? `${i * 0.06}s` : undefined,
-                    animationDuration: radioActive ? `${0.6 + Math.sin(i) * 0.3}s` : undefined,
-                    height: radioActive ? undefined : '3px',
-                    transition: 'height 0.3s ease',
-                  }}
+            <div className="p-5 sm:p-7 h-full flex flex-col">
+              {gamePhase === "playing" ? (
+                <textarea
+                  ref={textareaRef}
+                  value={typedText}
+                  onChange={handleTyping}
+                  className="flex-1 w-full bg-transparent text-[#efecec] text-[18px] sm:text-[24px] leading-[1.4] font-bold resize-none outline-none caret-[#efecec] placeholder:text-[#9a9a9a]"
+                  placeholder="Insert paragraph text here"
+                  spellCheck={false}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
                 />
-              ))}
+              ) : (
+                <p className="text-[#9a9a9a] text-[18px] sm:text-[24px] font-bold">
+                  <span className="text-[#efecec]">|</span>Insert paragraph text here
+                </p>
+              )}
             </div>
-            <p className="font-bold text-[10px] sm:text-xs text-[#6ec4e5] uppercase text-center animate-radio-fade" key={radioIdx}>
-              {radioMessages[radioIdx]}
-            </p>
+          </div>
+        </div>
+
+        {/* Decorative Keyboard */}
+        <div className="mt-4 sm:mt-6 mb-4 opacity-50 pointer-events-none flex flex-col items-center gap-[6px] sm:gap-[8px]">
+          {/* Row 1: q-p + backspace */}
+          <div className="flex gap-[5px] sm:gap-[6px]">
+            {KB_ROW1.map((k, i) => <Key key={k} label={k} sub={KB_ROW1_SUB[i]} />)}
+            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>} />
+          </div>
+          {/* Row 2: a-l + enter */}
+          <div className="flex gap-[5px] sm:gap-[6px]">
+            <div className="w-3 sm:w-4" /> {/* offset */}
+            {KB_ROW2.map((k, i) => <Key key={k} label={k} sub={KB_ROW2_SUB[i]} />)}
+            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 01-4 4H4"/></svg>} />
+          </div>
+          {/* Row 3: shift + z-. + shift */}
+          <div className="flex gap-[5px] sm:gap-[6px]">
+            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>} />
+            {KB_ROW3.map((k, i) => <Key key={k} label={k} sub={KB_ROW3_SUB[i]} />)}
+            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>} />
+          </div>
+          {/* Row 4: Ctrl, globe, mic, space, .?123, keyboard */}
+          <div className="flex gap-[5px] sm:gap-[6px]">
+            <Key label="Ctrl" />
+            <Key icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>} />
+            <Key icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>} />
+            <div className="rounded-[10px] bg-[#141518] border border-[#0C223C]/60 w-[280px] sm:w-[390px] h-[48px] sm:h-[55px]" />
+            <Key label=".?123" />
+            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>} />
           </div>
         </div>
       </div>
