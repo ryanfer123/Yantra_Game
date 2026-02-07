@@ -299,10 +299,10 @@ export default function AimTrainer() {
             </div>
           </div>
 
-          {/* Middle Center: 5×5 Aim Grid */}
+          {/* Middle Center: 5×5 Invisible Aim Grid (glitches appear randomly) */}
           <div className="flex-1 flex items-center justify-center">
             {gamePhase === "playing" && (
-              <div className="grid grid-cols-5 gap-1.5 sm:gap-2 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="grid grid-cols-5 w-full h-full pointer-events-auto" onClick={(e) => e.stopPropagation()}>
                 {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
                   const r = Math.floor(idx / GRID_SIZE);
                   const c = idx % GRID_SIZE;
@@ -311,13 +311,13 @@ export default function AimTrainer() {
                     <button
                       key={`${r}-${c}`}
                       onClick={isTarget ? handleTargetHit : handleMiss}
-                      className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border font-bold text-xl sm:text-2xl transition-all duration-100 ${
+                      className={`flex items-center justify-center cursor-crosshair transition-all duration-150 ${
                         isTarget
-                          ? "border-[#6ec4e5] bg-[#6ec4e5]/20 text-[#ff4444] hover:bg-[#6ec4e5]/40 hover:scale-110 shadow-[0_0_12px_rgba(110,196,229,0.3)]"
-                          : "border-white/10 bg-white/5 text-transparent hover:bg-white/10 cursor-crosshair"
+                          ? "text-3xl sm:text-4xl lg:text-5xl hover:scale-110"
+                          : ""
                       }`}
                     >
-                      {isTarget ? "👾" : "·"}
+                      {isTarget && <span className="drop-shadow-[0_0_12px_rgba(110,196,229,0.6)]">👾</span>}
                     </button>
                   );
                 })}
