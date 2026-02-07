@@ -115,16 +115,32 @@ export default function TypingTest() {
     if (gamePhase === "playing") textareaRef.current?.focus();
   }, [gamePhase]);
 
-  // Render paragraph with text color: cyan correct, red incorrect, gray untyped
+  // Render paragraph with text color: cyan correct, red incorrect, gray untyped + blinking cursor
   const renderHighlightedParagraph = () => {
     if (!paragraph) return null;
-    return paragraph.split("").map((char, i) => {
+    const chars = paragraph.split("").map((char, i) => {
       let colorClass = "text-[#9a9a9a]";
       if (i < typedText.length) {
         colorClass = typedText[i] === char ? "text-[#6ec4e5]" : "text-[#e54444]";
       }
-      return <span key={i} className={colorClass}>{char}</span>;
+      return (
+        <span key={i} className="relative">
+          {i === typedText.length && (
+            <span className="absolute left-0 top-[2px] bottom-[2px] w-[2px] bg-[#6ec4e5] animate-pulse" />
+          )}
+          <span className={colorClass}>{char}</span>
+        </span>
+      );
     });
+    // If user typed past the end, show cursor at end
+    if (typedText.length >= paragraph.length) {
+      chars.push(
+        <span key="cursor" className="relative inline-block w-0">
+          <span className="absolute left-0 top-[2px] bottom-[2px] w-[2px] bg-[#6ec4e5] animate-pulse" />
+        </span>
+      );
+    }
+    return chars;
   };
 
   const [showLoading, setShowLoading] = useState(false);
