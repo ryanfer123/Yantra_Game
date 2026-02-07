@@ -148,235 +148,204 @@ export default function AimTrainer() {
         className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-15"
       />
 
-      {/* ─── TOP LEFT: Coordinates & Location ─── */}
-      <div className="absolute top-5 left-8 z-10">
-        <div className="font-bold text-[#6ec4e5] text-sm uppercase leading-snug">
-          <p>23.2139 N</p>
-          <p>58.932 W</p>
-          <p>
-            <span className="text-white">ALT :</span>{" "}
-            <span className="text-[#6ec4e5]">9000m</span>
-          </p>
-        </div>
-        <div className="font-bold text-sm uppercase leading-snug mt-4">
-          <p>
-            <span className="text-white">LOCATION :</span>
-          </p>
-          <p className="text-[#6ec4e5]">XX HORIZON</p>
-          <p className="text-[#6ec4e5]">FRONT II</p>
-        </div>
-      </div>
+      {/* ═══ FLEX HUD LAYOUT ═══ */}
+      <div className="absolute inset-0 z-10 flex flex-col p-4 sm:p-6 lg:p-8 pointer-events-none">
 
-      {/* ─── TOP CENTER: Wave timer ─── */}
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-10 text-center">
-        <p className="font-bold text-white text-lg uppercase">
-          WAVE PERSISTING FOR
-        </p>
-        <p className="font-bold text-[#6ec4e5] text-3xl">
-          {mins}:{secs}
-        </p>
-      </div>
-
-      {/* ─── TOP RIGHT: Radar ─── */}
-      <div className="absolute top-8 right-8 z-10">
-        <div className="w-48 h-48 rounded-full border-2 border-[#6ec4e5]/30 bg-[#0a1a2a]/70 relative overflow-hidden">
-          {/* Concentric rings */}
-          <div className="absolute inset-[25%] rounded-full border border-[#6ec4e5]/15" />
-          <div className="absolute inset-[40%] rounded-full border border-[#6ec4e5]/15" />
-          {/* Crosshairs */}
-          <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#6ec4e5]/15" />
-          <div className="absolute left-0 right-0 top-1/2 h-px bg-[#6ec4e5]/15" />
-          {/* Sweep */}
-          <div
-            className="absolute top-1/2 left-1/2 w-1/2 h-px origin-left"
-            style={{
-              transform: `rotate(${sweepAngle}deg)`,
-              background:
-                "linear-gradient(90deg, #6ec4e5 0%, transparent 100%)",
-              boxShadow: "0 0 12px 3px rgba(110,196,229,0.3)",
-            }}
-          />
-          {/* Center dot */}
-          <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6ec4e5]" />
-        </div>
-      </div>
-
-      {/* ─── LEFT MID: Wireframe Globe ─── */}
-      <div className="absolute top-[27%] left-8 z-10 w-52 flex flex-col items-center">
-        {/* Corner brackets */}
-        <div className="relative w-44 h-44">
-          {/* TL bracket */}
-          <div className="absolute -top-1 -left-1 w-4 h-4 border-t border-l border-[#6ec4e5]/40" />
-          {/* TR bracket */}
-          <div className="absolute -top-1 -right-1 w-4 h-4 border-t border-r border-[#6ec4e5]/40" />
-          {/* BL bracket */}
-          <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b border-l border-[#6ec4e5]/40" />
-          {/* BR bracket */}
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b border-r border-[#6ec4e5]/40" />
-          {/* Wireframe sphere SVG */}
-          <svg
-            viewBox="0 0 200 200"
-            className="w-full h-full opacity-40"
-            fill="none"
-            stroke="#6ec4e5"
-            strokeWidth="0.8"
-          >
-            {/* Outer circle */}
-            <circle cx="100" cy="100" r="85" strokeWidth="1" />
-            {/* Latitude lines */}
-            <ellipse cx="100" cy="60" rx="78" ry="8" />
-            <ellipse cx="100" cy="80" rx="83" ry="6" />
-            {/* Equator */}
-            <ellipse cx="100" cy="100" rx="85" ry="4" strokeWidth="1" />
-            <ellipse cx="100" cy="120" rx="83" ry="6" />
-            <ellipse cx="100" cy="140" rx="78" ry="8" />
-            {/* Meridian lines (vertical ellipses at different rotations) */}
-            {/* Center meridian */}
-            <ellipse cx="100" cy="100" rx="4" ry="85" strokeWidth="1" />
-            {/* ±30° */}
-            <ellipse cx="100" cy="100" rx="42" ry="85" />
-            {/* ±60° */}
-            <ellipse cx="100" cy="100" rx="74" ry="85" />
-            {/* Tilt accent line */}
-            <line x1="30" y1="50" x2="170" y2="150" strokeWidth="0.4" opacity="0.3" />
-          </svg>
-        </div>
-        {/* Label below globe */}
-        <p className="text-[#6ec4e5]/40 text-[10px] font-bold uppercase tracking-widest mt-1">
-          SECTOR MAP
-        </p>
-      </div>
-
-      {/* ─── LEFT MID-LOW: "FOR THE O.S." text columns ─── */}
-      <div
-        className="absolute left-8 top-[56%] z-10 text-[11px] font-bold uppercase leading-[1.6]"
-        style={{ opacity: flashBright ? 1 : 0.35, transition: "opacity 0.3s", textShadow: flashBright ? '0 0 8px #6ec4e5, 0 0 16px #6ec4e5' : 'none' }}
-      >
-        <div className="flex gap-6">
-          <div className="text-center">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <p key={i}>
-                <span className="text-white">FOR THE</span>{" "}
-                <span className="text-[#6ec4e5]">O.S.</span>
-              </p>
-            ))}
-          </div>
-          <div className="text-center">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <p key={i}>
-                <span className="text-white">FOR THE</span>{" "}
-                <span className="text-[#6ec4e5]">O.S.</span>
-              </p>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ─── LEFT BOTTOM: Vitals card ─── */}
-      <div className="absolute left-8 bottom-[22%] z-10">
-        <div
-          className="border border-white/30 bg-[#0a1428]/60 px-6 py-3"
-        >
-          <p className="font-bold text-base uppercase">
-            <span className="text-white">VITALS :</span>{" "}
-            <span className="text-[#6ec4e5]">GOOD</span>
-          </p>
-        </div>
-      </div>
-
-      {/* ─── LEFT BOTTOM: Coordinates card ─── */}
-      <div className="absolute left-8 bottom-8 z-10">
-        <div className="border border-white/30 bg-[#0a1428]/60 px-6 py-4">
-          <p className="font-bold text-sm text-white uppercase">Coordinates</p>
-          <p className="font-bold text-sm uppercase mt-1">
-            <span className="text-white">X :</span>{" "}
-            <span className="text-[#6ec4e5]">{cursor.x}</span>
-          </p>
-          <p className="font-bold text-sm uppercase">
-            <span className="text-white">Y :</span>{" "}
-            <span className="text-[#6ec4e5]">{cursor.y}</span>
-          </p>
-        </div>
-      </div>
-
-      {/* ─── RIGHT MID: Ammo & Shield card ─── */}
-      <div className="absolute right-8 top-[35%] z-10">
-        <div className="border border-white/30 bg-[#0a1428]/60 px-6 py-4">
-          <p className="font-bold text-base uppercase">
-            <span className="text-white">AMMO LEFT :</span>{" "}
-            <span className="text-[#6ec4e5]">{ammo}</span>
-          </p>
-          <p className="font-bold text-base uppercase mt-1">
-            <span className="text-white">SHIELD :</span>{" "}
-            <span className="text-[#6ec4e5]">{shield}</span>
-          </p>
-        </div>
-      </div>
-
-      {/* ─── RIGHT MID: Audio bars (draggable sliders) ─── */}
-      <div
-        ref={barsContainerRef}
-        className="absolute right-8 top-[52%] z-10 flex flex-col gap-1 cursor-ew-resize"
-        onPointerMove={handleBarPointerMove}
-        onPointerUp={handleBarPointerUp}
-        onPointerLeave={handleBarPointerUp}
-      >
-        {bars.map((w, i) => (
-          <div
-            key={i}
-            className="flex items-center h-5 touch-none"
-            onPointerDown={(e) => handleBarPointerDown(i, e)}
-          >
-            <div className="relative h-3 bg-[#6ec4e5]/10 border border-[#6ec4e5]/20" style={{ width: 200 }}>
-              <div
-                className="absolute top-0 left-0 h-full bg-[#6ec4e5]"
-                style={{
-                  width: `${w}%`,
-                  transition: draggingBar.current === i ? 'none' : 'width 0.3s ease-out',
-                  opacity: 0.7,
-                }}
-              />
-              {/* Drag handle */}
-              <div
-                className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white/80"
-                style={{ left: `${w}%`, transform: 'translate(-50%, -50%)' }}
-              />
+        {/* ─── TOP ROW ─── */}
+        <div className="flex items-start justify-between gap-4 shrink-0">
+          {/* Top Left: EXIT + Coordinates & Location */}
+          <div className="flex items-start gap-3 pointer-events-auto">
+            <button
+              onClick={() => navigate("/play")}
+              className="px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors shrink-0"
+            >
+              ← EXIT
+            </button>
+            <div>
+              <div className="font-bold text-[#6ec4e5] text-xs sm:text-sm uppercase leading-snug">
+                <p>23.2139 N</p>
+                <p>58.932 W</p>
+                <p>
+                  <span className="text-white">ALT :</span>{" "}
+                  <span className="text-[#6ec4e5]">9000m</span>
+                </p>
+              </div>
+              <div className="font-bold text-xs sm:text-sm uppercase leading-snug mt-2 sm:mt-4">
+                <p><span className="text-white">LOCATION :</span></p>
+                <p className="text-[#6ec4e5]">XX HORIZON</p>
+                <p className="text-[#6ec4e5]">FRONT II</p>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* ─── RIGHT BOTTOM: Radio message card ─── */}
-      <div className="absolute right-8 bottom-8 z-10">
-        <div className="border border-white/30 bg-[#0a1428]/60 px-5 py-4 w-64 h-28 flex flex-col items-center justify-center">
-          {/* Animated audio wave */}
-          <div className="flex items-end justify-center gap-[2px] h-8 mb-3">
-            {Array.from({ length: 24 }).map((_, i) => (
+          {/* Top Center: Wave timer */}
+          <div className="text-center shrink-0">
+            <p className="font-bold text-white text-sm sm:text-lg uppercase">
+              WAVE PERSISTING FOR
+            </p>
+            <p className="font-bold text-[#6ec4e5] text-xl sm:text-3xl">
+              {mins}:{secs}
+            </p>
+          </div>
+
+          {/* Top Right: TASK button + Radar */}
+          <div className="flex items-start gap-3">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowTaskPopup(true); }}
+              className="px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto shrink-0"
+            >
+              TASK
+            </button>
+            <div className="w-28 h-28 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-full border-2 border-[#6ec4e5]/30 bg-[#0a1a2a]/70 relative overflow-hidden shrink-0">
+              <div className="absolute inset-[25%] rounded-full border border-[#6ec4e5]/15" />
+              <div className="absolute inset-[40%] rounded-full border border-[#6ec4e5]/15" />
+              <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#6ec4e5]/15" />
+              <div className="absolute left-0 right-0 top-1/2 h-px bg-[#6ec4e5]/15" />
               <div
-                key={i}
-                className="w-[2px] bg-[#6ec4e5]/70 animate-audio-bar"
+                className="absolute top-1/2 left-1/2 w-1/2 h-px origin-left"
                 style={{
-                  animationDelay: `${i * 0.08}s`,
-                  animationDuration: `${0.4 + Math.random() * 0.6}s`,
+                  transform: `rotate(${sweepAngle}deg)`,
+                  background: "linear-gradient(90deg, #6ec4e5 0%, transparent 100%)",
+                  boxShadow: "0 0 12px 3px rgba(110,196,229,0.3)",
                 }}
               />
-            ))}
+              <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6ec4e5]" />
+            </div>
           </div>
-          <p
-            className="font-bold text-xs text-[#6ec4e5] uppercase text-center animate-radio-fade"
-            key={radioIdx}
-          >
-            {radioMessages[radioIdx]}
-          </p>
         </div>
-      </div>
 
-      {/* ─── BOTTOM CENTER: Glitches eliminated ─── */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-        <p className="font-bold text-2xl uppercase">
-          <span className="text-white">GLITCHES ELIMINATED :</span>{" "}
-          <span className="text-[#6ec4e5]">{glitchesEliminated}</span>
-        </p>
+        {/* ─── MIDDLE ROW (flex-1) ─── */}
+        <div className="flex-1 flex items-stretch justify-between gap-4 min-h-0 py-2 sm:py-4">
+          {/* Middle Left: Globe + FOR THE O.S. */}
+          <div className="flex flex-col items-center justify-start gap-2 sm:gap-4 shrink-0 w-36 sm:w-44 lg:w-52">
+            {/* Globe */}
+            <div className="relative w-28 h-28 sm:w-36 sm:h-36 lg:w-44 lg:h-44">
+              <div className="absolute -top-1 -left-1 w-4 h-4 border-t border-l border-[#6ec4e5]/40" />
+              <div className="absolute -top-1 -right-1 w-4 h-4 border-t border-r border-[#6ec4e5]/40" />
+              <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b border-l border-[#6ec4e5]/40" />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b border-r border-[#6ec4e5]/40" />
+              <svg viewBox="0 0 200 200" className="w-full h-full opacity-40" fill="none" stroke="#6ec4e5" strokeWidth="0.8">
+                <circle cx="100" cy="100" r="85" strokeWidth="1" />
+                <ellipse cx="100" cy="60" rx="78" ry="8" />
+                <ellipse cx="100" cy="80" rx="83" ry="6" />
+                <ellipse cx="100" cy="100" rx="85" ry="4" strokeWidth="1" />
+                <ellipse cx="100" cy="120" rx="83" ry="6" />
+                <ellipse cx="100" cy="140" rx="78" ry="8" />
+                <ellipse cx="100" cy="100" rx="4" ry="85" strokeWidth="1" />
+                <ellipse cx="100" cy="100" rx="42" ry="85" />
+                <ellipse cx="100" cy="100" rx="74" ry="85" />
+                <line x1="30" y1="50" x2="170" y2="150" strokeWidth="0.4" opacity="0.3" />
+              </svg>
+            </div>
+            <p className="text-[#6ec4e5]/40 text-[10px] font-bold uppercase tracking-widest">SECTOR MAP</p>
+
+            {/* FOR THE O.S. */}
+            <div
+              className="text-[10px] sm:text-[11px] font-bold uppercase leading-[1.6]"
+              style={{ opacity: flashBright ? 1 : 0.35, transition: "opacity 0.3s", textShadow: flashBright ? '0 0 8px #6ec4e5, 0 0 16px #6ec4e5' : 'none' }}
+            >
+              <div className="flex gap-4 sm:gap-6">
+                <div className="text-center">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <p key={i}><span className="text-white">FOR THE</span>{" "}<span className="text-[#6ec4e5]">O.S.</span></p>
+                  ))}
+                </div>
+                <div className="text-center">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <p key={i}><span className="text-white">FOR THE</span>{" "}<span className="text-[#6ec4e5]">O.S.</span></p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Middle Center: empty (crosshair area) */}
+          <div className="flex-1" />
+
+          {/* Middle Right: Ammo/Shield + Audio bars */}
+          <div className="flex flex-col items-end justify-start gap-3 sm:gap-4 shrink-0">
+            {/* Ammo & Shield */}
+            <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-6 py-3 sm:py-4">
+              <p className="font-bold text-sm sm:text-base uppercase">
+                <span className="text-white">AMMO LEFT :</span>{" "}
+                <span className="text-[#6ec4e5]">{ammo}</span>
+              </p>
+              <p className="font-bold text-sm sm:text-base uppercase mt-1">
+                <span className="text-white">SHIELD :</span>{" "}
+                <span className="text-[#6ec4e5]">{shield}</span>
+              </p>
+            </div>
+
+            {/* Audio bars (draggable sliders) */}
+            <div
+              ref={barsContainerRef}
+              className="flex flex-col gap-1 cursor-ew-resize pointer-events-auto"
+              onPointerMove={handleBarPointerMove}
+              onPointerUp={handleBarPointerUp}
+              onPointerLeave={handleBarPointerUp}
+            >
+              {bars.map((w, i) => (
+                <div key={i} className="flex items-center h-5 touch-none" onPointerDown={(e) => handleBarPointerDown(i, e)}>
+                  <div className="relative h-3 bg-[#6ec4e5]/10 border border-[#6ec4e5]/20 w-32 sm:w-40 lg:w-[200px]">
+                    <div
+                      className="absolute top-0 left-0 h-full bg-[#6ec4e5]"
+                      style={{ width: `${w}%`, transition: draggingBar.current === i ? 'none' : 'width 0.3s ease-out', opacity: 0.7 }}
+                    />
+                    <div className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white/80" style={{ left: `${w}%`, transform: 'translate(-50%, -50%)' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ─── BOTTOM ROW ─── */}
+        <div className="flex items-end justify-between gap-4 shrink-0">
+          {/* Bottom Left: Vitals + Coordinates */}
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-6 py-2 sm:py-3">
+              <p className="font-bold text-sm sm:text-base uppercase">
+                <span className="text-white">VITALS :</span>{" "}
+                <span className="text-[#6ec4e5]">GOOD</span>
+              </p>
+            </div>
+            <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-6 py-3 sm:py-4">
+              <p className="font-bold text-xs sm:text-sm text-white uppercase">Coordinates</p>
+              <p className="font-bold text-xs sm:text-sm uppercase mt-1">
+                <span className="text-white">X :</span>{" "}
+                <span className="text-[#6ec4e5]">{cursor.x}</span>
+              </p>
+              <p className="font-bold text-xs sm:text-sm uppercase">
+                <span className="text-white">Y :</span>{" "}
+                <span className="text-[#6ec4e5]">{cursor.y}</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom Center: Glitches eliminated */}
+          <div className="text-center">
+            <p className="font-bold text-lg sm:text-2xl uppercase">
+              <span className="text-white">GLITCHES ELIMINATED :</span>{" "}
+              <span className="text-[#6ec4e5]">{glitchesEliminated}</span>
+            </p>
+          </div>
+
+          {/* Bottom Right: Radio message card */}
+          <div className="border border-white/30 bg-[#0a1428]/60 px-4 sm:px-5 py-3 sm:py-4 w-48 sm:w-56 lg:w-64 h-24 sm:h-28 flex flex-col items-center justify-center">
+            <div className="flex items-end justify-center gap-[2px] h-6 sm:h-8 mb-2 sm:mb-3">
+              {Array.from({ length: 24 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-[2px] bg-[#6ec4e5]/70 animate-audio-bar"
+                  style={{ animationDelay: `${i * 0.08}s`, animationDuration: `${0.4 + Math.random() * 0.6}s` }}
+                />
+              ))}
+            </div>
+            <p className="font-bold text-[10px] sm:text-xs text-[#6ec4e5] uppercase text-center animate-radio-fade" key={radioIdx}>
+              {radioMessages[radioIdx]}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* ─── CENTER: Custom crosshair (diamond reticle) ─── */}
@@ -399,7 +368,7 @@ export default function AimTrainer() {
       {/* ─── TASK POPUP (placeholder) ─── */}
       {showTaskPopup && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 pointer-events-auto">
-          <div className="relative border-2 border-[#6ec4e5] bg-[#0a1428]/90 p-8 max-w-md w-full mx-4">
+          <div className="relative border-2 border-[#6ec4e5] bg-[#0a1428]/90 p-6 sm:p-8 max-w-md w-full mx-4">
             <button
               onClick={(e) => { e.stopPropagation(); setShowTaskPopup(false); }}
               className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center text-[#6ec4e5] border border-[#6ec4e5]/40 hover:bg-[#6ec4e5]/20 transition-colors font-bold text-sm"
@@ -422,60 +391,31 @@ export default function AimTrainer() {
         </div>
       )}
 
-      {/* ─── BACK TO PORTAL button ─── */}
-      <button
-        onClick={() => navigate("/play")}
-        className="absolute top-4 right-[290px] z-30 px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto"
-      >
-        ← EXIT
-      </button>
-
-      {/* ─── SHOW TASK button (temporary, for testing) ─── */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowTaskPopup(true);
-        }}
-        className="absolute top-4 right-[220px] z-30 px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto"
-      >
-        TASK
-      </button>
-
       {/* ─── LOADING SCREEN (when timer ends) ─── */}
       {showLoading && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 pointer-events-auto animate-loading-fade-in"
           style={{ fontFamily: "'Jura', sans-serif" }}
         >
-          {/* Scan lines overlay */}
           <div
             className="absolute inset-0 pointer-events-none opacity-10"
-            style={{
-              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(110,196,229,0.08) 2px, rgba(110,196,229,0.08) 4px)',
-            }}
+            style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(110,196,229,0.08) 2px, rgba(110,196,229,0.08) 4px)' }}
           />
-
-          {/* Glitch bar top */}
           <div className="absolute top-[30%] left-0 right-0 h-px bg-[#6ec4e5]/20" />
           <div className="absolute top-[70%] left-0 right-0 h-px bg-[#6ec4e5]/20" />
 
           <p className="text-[#6ec4e5]/60 text-xs uppercase tracking-[0.3em] mb-6">
             // RETURNING TO BASE
           </p>
-
           <h2 className="font-bold text-2xl text-[#6ec4e5] uppercase tracking-widest mb-3">
             WAVE COMPLETE
           </h2>
-
           <p className="text-white/50 text-sm uppercase tracking-wider mb-8">
             GLITCHES ELIMINATED : <span className="text-[#6ec4e5]">{glitchesEliminated}</span>
           </p>
-
-          {/* Loading bar */}
           <div className="w-64 h-1 bg-white/10 overflow-hidden">
             <div className="h-full bg-[#6ec4e5] animate-loading-bar" />
           </div>
-
           <p className="text-white/30 text-[10px] uppercase tracking-widest mt-4">
             TELEPORTING TO SECTOR MAP...
           </p>
