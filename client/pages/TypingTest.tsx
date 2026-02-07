@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-const GAME_DURATION = 60; // seconds
+const GAME_DURATION = 60;
 
 const PARAGRAPHS = [
   "The neural interface requires a precise calibration sequence before deployment. Each signal must pass through the cortex bridge at exactly the right frequency to avoid data corruption. Operators must maintain focus during the entire synchronization process, as even minor deviations can cause catastrophic feedback loops in the system.",
@@ -11,7 +11,7 @@ const PARAGRAPHS = [
   "Machine learning models thrive on large datasets and iterative training cycles. Each epoch refines the model weights, gradually improving accuracy and reducing loss. The process requires substantial computational resources but yields powerful predictive capabilities when properly calibrated.",
 ];
 
-// Keyboard layout for decorative display
+// Keyboard layout
 const KB_ROW1 = ["q","w","e","r","t","y","u","i","o","p"];
 const KB_ROW1_SUB = ["1","2","3","4","5","6","7","8","9","0"];
 const KB_ROW2 = ["a","s","d","f","g","h","j","k","l"];
@@ -58,8 +58,9 @@ export default function TypingTest() {
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Track which key was just pressed for keyboard highlight
+  // Track pressed key — keyboard is hidden until a key is pressed
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const activeKeyTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -97,7 +98,7 @@ export default function TypingTest() {
     setTimeout(() => textareaRef.current?.focus(), 100);
   }, []);
 
-  // Handle typing + key highlight
+  // Handle typing & highlight the pressed key
   const handleTyping = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setTypedText(val);
@@ -105,19 +106,36 @@ export default function TypingTest() {
     if (lastChar) {
       setActiveKey(lastChar);
       if (activeKeyTimeout.current) clearTimeout(activeKeyTimeout.current);
-      activeKeyTimeout.current = setTimeout(() => setActiveKey(null), 150);
+      activeKeyTimeout.current = setTimeout(() => setActiveKey(null), 200);
     }
   }, []);
 
-  // Highlighted reference paragraph
+  // Click anywhere on card focuses the hidden textarea
+  const handleCardClick = useCallback(() => {
+    if (gamePhase === "playing") textareaRef.current?.focus();
+  }, [gamePhase]);
+
+  // Render paragraph with background highlights per the Figma design
   const renderHighlightedParagraph = () => {
     if (!paragraph) return null;
     return paragraph.split("").map((char, i) => {
-      let color = "text-[#9a9a9a]";
       if (i < typedText.length) {
-        color = typedText[i] === char ? "text-green-400" : "text-red-400";
+        const isCorrect = typedText[i] === char;
+        return (
+          <span
+            key={i}
+            className="text-[#9a9a9a]"
+            style={{
+              backgroundColor: isCorrect
+                ? "rgba(0, 255, 255, 0.54)"
+                : "rgba(244, 6, 6, 0.47)",
+            }}
+          >
+            {char}
+          </span>
+        );
       }
-      return <span key={i} className={color}>{char}</span>;
+      return <span key={i} className="text-[#9a9a9a]">{char}</span>;
     });
   };
 
@@ -128,16 +146,27 @@ export default function TypingTest() {
 
   const score = calcTypingScore(wpm, accuracy);
 
-  // Keyboard key component
-  const Key = ({ label, sub, wide, icon }: { label?: string; sub?: string; wide?: string; icon?: React.ReactNode }) => {
-    const isActive = label && activeKey === label.toLowerCase();
+  // Key component — only visible when activeKey matches
+  const Key = ({ label, sub, wide, icon, isSpecial }: {
+    label?: string; sub?: string; wide?: string; icon?: React.ReactNode; isSpecial?: boolean;
+  }) => {
+    const isActive = label ? activeKey === label.toLowerCase() : false;
+    // Keyboard is hidden: only show a key when it's actively pressed
+    if (!isActive && !isSpecial) {
+      return (
+        <div className={`rounded-[10px] ${wide || "w-[60px] sm:w-[65px]"} h-[48px] sm:h-[55px]`} />
+      );
+    }
+    if (!isActive && isSpecial) {
+      return (
+        <div className={`rounded-[10px] ${wide || "w-[60px] sm:w-[65px]"} h-[48px] sm:h-[55px]`} />
+      );
+    }
     return (
       <div
-        className={`relative rounded-[10px] flex items-center justify-center transition-colors duration-100 ${
+        className={`relative rounded-[10px] flex items-center justify-center transition-all duration-75 ${
           wide || "w-[60px] sm:w-[65px]"
-        } h-[48px] sm:h-[55px] ${
-          isActive ? "bg-[#097CFB]" : "bg-[#141518]"
-        } border border-[#0C223C]/60`}
+        } h-[48px] sm:h-[55px] bg-[#097CFB] border border-[#0C223C]/60`}
       >
         {sub && (
           <span className="absolute top-1 left-0 right-0 text-center text-[10px] sm:text-[11px] text-white/40 font-medium">{sub}</span>
@@ -153,6 +182,7 @@ export default function TypingTest() {
 
   return (
     <div
+      ref={containerRef}
       className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] select-none"
       style={{ fontFamily: "'Jura', sans-serif" }}
     >
@@ -165,6 +195,21 @@ export default function TypingTest() {
       />
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-[rgba(10,10,10,0.5)] backdrop-blur-[5px]" />
+
+      {/* Hidden textarea to capture keyboard input */}
+      {gamePhase === "playing" && (
+        <textarea
+          ref={textareaRef}
+          value={typedText}
+          onChange={handleTyping}
+          className="absolute opacity-0 w-0 h-0 pointer-events-none"
+          style={{ position: "fixed", top: -9999, left: -9999 }}
+          spellCheck={false}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+        />
+      )}
 
       {/* ═══ MAIN CONTENT ═══ */}
       <div className="absolute inset-0 z-10 flex flex-col items-center">
@@ -179,82 +224,58 @@ export default function TypingTest() {
           {mins}:{secs}
         </p>
 
-        {/* Two cards side by side */}
-        <div className="flex gap-3 sm:gap-6 w-full max-w-[1300px] px-6 sm:px-[80px] mt-4 sm:mt-8 flex-1 min-h-0 max-h-[340px]">
-          {/* Left Card: Reference Paragraph */}
-          <div className="flex-1 relative bg-[#0a1020]/50 overflow-hidden">
-            {/* Corner brackets (white, 2.4px, ~13px) */}
-            <div className="absolute top-0 left-0 w-[13px] h-[13px] border-t-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute top-0 right-0 w-[13px] h-[13px] border-t-[2.4px] border-r-[2.4px] border-white" />
-            <div className="absolute bottom-0 left-0 w-[13px] h-[13px] border-b-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute bottom-0 right-0 w-[13px] h-[13px] border-b-[2.4px] border-r-[2.4px] border-white" />
+        {/* Single card with reference paragraph + highlights */}
+        <div className="w-full max-w-[900px] px-6 sm:px-[40px] mt-4 sm:mt-6 flex-1 min-h-0 max-h-[345px]">
+          <div
+            className="relative w-full h-full cursor-text"
+            onClick={handleCardClick}
+          >
+            {/* Card background SVG (semi-transparent) */}
+            <div className="absolute inset-0 bg-[#0a1020]/30 rounded-sm" />
 
-            <div className="p-5 sm:p-7 h-full overflow-y-auto">
-              <p className="text-[#9a9a9a] text-[18px] sm:text-[24px] leading-[1.4] font-bold">
+            {/* Corner brackets (white, 2.4px, per Figma) */}
+            <div className="absolute top-0 left-0 w-[18px] h-[13px] border-t-[2.4px] border-l-[2.4px] border-white" />
+            <div className="absolute top-0 right-0 w-[18px] h-[13px] border-t-[2.4px] border-r-[2.4px] border-white" />
+            <div className="absolute bottom-0 left-0 w-[30px] h-[28px] border-b-[2.4px] border-l-[2.4px] border-white" />
+            <div className="absolute bottom-0 right-0 w-[18px] h-[13px] border-b-[2.4px] border-r-[2.4px] border-white" />
+
+            <div className="relative p-6 sm:p-8 h-full overflow-y-auto z-10">
+              <p className="text-[#9a9a9a] text-[20px] sm:text-[24px] leading-[1.3] font-bold">
                 {gamePhase === "playing" ? renderHighlightedParagraph() : (
-                  <span className="text-[#9a9a9a]">Reference paragraph is written here</span>
+                  <span>Reference paragraph is written here</span>
                 )}
               </p>
             </div>
           </div>
-
-          {/* Right Card: Typing Area */}
-          <div className="flex-1 relative bg-[#0a1020]/50 overflow-hidden">
-            {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-[13px] h-[13px] border-t-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute top-0 right-0 w-[13px] h-[13px] border-t-[2.4px] border-r-[2.4px] border-white" />
-            <div className="absolute bottom-0 left-0 w-[13px] h-[13px] border-b-[2.4px] border-l-[2.4px] border-white" />
-            <div className="absolute bottom-0 right-0 w-[13px] h-[13px] border-b-[2.4px] border-r-[2.4px] border-white" />
-
-            <div className="p-5 sm:p-7 h-full flex flex-col">
-              {gamePhase === "playing" ? (
-                <textarea
-                  ref={textareaRef}
-                  value={typedText}
-                  onChange={handleTyping}
-                  className="flex-1 w-full bg-transparent text-[#efecec] text-[18px] sm:text-[24px] leading-[1.4] font-bold resize-none outline-none caret-[#efecec] placeholder:text-[#9a9a9a]"
-                  placeholder="Insert paragraph text here"
-                  spellCheck={false}
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                />
-              ) : (
-                <p className="text-[#9a9a9a] text-[18px] sm:text-[24px] font-bold">
-                  <span className="text-[#efecec]">|</span>Insert paragraph text here
-                </p>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Decorative Keyboard */}
-        <div className="mt-4 sm:mt-6 mb-4 opacity-50 pointer-events-none flex flex-col items-center gap-[6px] sm:gap-[8px]">
+        {/* Keyboard — hidden by default, only pressed key lights up */}
+        <div className="mt-4 sm:mt-6 mb-4 flex flex-col items-center gap-[6px] sm:gap-[8px]">
           {/* Row 1: q-p + backspace */}
           <div className="flex gap-[5px] sm:gap-[6px]">
             {KB_ROW1.map((k, i) => <Key key={k} label={k} sub={KB_ROW1_SUB[i]} />)}
-            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>} />
+            <Key isSpecial icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>} />
           </div>
           {/* Row 2: a-l + enter */}
           <div className="flex gap-[5px] sm:gap-[6px]">
-            <div className="w-3 sm:w-4" /> {/* offset */}
+            <div className="w-3 sm:w-4" />
             {KB_ROW2.map((k, i) => <Key key={k} label={k} sub={KB_ROW2_SUB[i]} />)}
-            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 01-4 4H4"/></svg>} />
+            <Key isSpecial icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 01-4 4H4"/></svg>} />
           </div>
           {/* Row 3: shift + z-. + shift */}
           <div className="flex gap-[5px] sm:gap-[6px]">
-            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>} />
+            <Key isSpecial icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>} />
             {KB_ROW3.map((k, i) => <Key key={k} label={k} sub={KB_ROW3_SUB[i]} />)}
-            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>} />
+            <Key isSpecial icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>} />
           </div>
           {/* Row 4: Ctrl, globe, mic, space, .?123, keyboard */}
           <div className="flex gap-[5px] sm:gap-[6px]">
-            <Key label="Ctrl" />
-            <Key icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>} />
-            <Key icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>} />
-            <div className="rounded-[10px] bg-[#141518] border border-[#0C223C]/60 w-[280px] sm:w-[390px] h-[48px] sm:h-[55px]" />
-            <Key label=".?123" />
-            <Key icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>} />
+            <Key isSpecial label="Ctrl" />
+            <Key isSpecial icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>} />
+            <Key isSpecial icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>} />
+            <div className={`rounded-[10px] ${activeKey === " " ? "bg-[#097CFB]" : ""} border border-transparent w-[280px] sm:w-[390px] h-[48px] sm:h-[55px] transition-all duration-75`} />
+            <Key isSpecial label=".?123" />
+            <Key isSpecial icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>} />
           </div>
         </div>
       </div>
