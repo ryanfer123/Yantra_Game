@@ -1,5 +1,5 @@
 /** @import must precede all other statements */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Press+Start+2P&family=Tiny5&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Jura:wght@400;500;600;700&family=Press+Start+2P&family=Tiny5&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -190,4 +190,27 @@
   100% {
     opacity: 0;
   }
+}
+
+@keyframes radio-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.animate-radio-fade {
+  animation: radio-fade 5s ease-in-out;
 }

@@ -85,23 +85,14 @@ export default function AimTrainer() {
     return () => clearInterval(id);
   }, []);
 
-  // ── "FOR THE O.S." text flash ──
-  const [flashVisible, setFlashVisible] = useState(true);
+  // ── "FOR THE O.S." text flash (default dim, bright on flash) ──
+  const [flashBright, setFlashBright] = useState(false);
   useEffect(() => {
-    const id = setInterval(
-      () => setFlashVisible((v) => !v),
-      3000 + Math.random() * 2000
-    );
-    return () => clearInterval(id);
-  }, []);
-
-  // ── Vitals flash ──
-  const [vitalsFlash, setVitalsFlash] = useState(true);
-  useEffect(() => {
-    const id = setInterval(
-      () => setVitalsFlash((v) => !v),
-      4000 + Math.random() * 3000
-    );
+    const flash = () => {
+      setFlashBright(true);
+      setTimeout(() => setFlashBright(false), 600);
+    };
+    const id = setInterval(flash, 3000 + Math.random() * 2000);
     return () => clearInterval(id);
   }, []);
 
@@ -119,11 +110,11 @@ export default function AimTrainer() {
       className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] cursor-crosshair select-none"
       onMouseMove={handleMouseMove}
       onClick={handleClick}
-      style={{ fontFamily: "'Jura', 'Press Start 2P', monospace" }}
+      style={{ fontFamily: "'Jura', sans-serif" }}
     >
-      {/* Background image (space scene + grid baked in) */}
+      {/* Background image (nighttime cityscape) */}
       <img
-        src="/aim-bg.png"
+        src="/aim-bg-new.png"
         alt=""
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
@@ -187,24 +178,56 @@ export default function AimTrainer() {
         </div>
       </div>
 
-      {/* ─── LEFT MID: Globe / Map ─── */}
-      <div className="absolute top-[27%] left-8 z-10 w-52">
-        <img
-          src="/aim-globe.svg"
-          alt="Globe"
-          className="w-40 h-40 opacity-50 mx-auto"
-        />
-        <img
-          src="/aim-info.svg"
-          alt="Info"
-          className="w-full opacity-50 mt-1"
-        />
+      {/* ─── LEFT MID: Wireframe Globe ─── */}
+      <div className="absolute top-[27%] left-8 z-10 w-52 flex flex-col items-center">
+        {/* Corner brackets */}
+        <div className="relative w-44 h-44">
+          {/* TL bracket */}
+          <div className="absolute -top-1 -left-1 w-4 h-4 border-t border-l border-[#6ec4e5]/40" />
+          {/* TR bracket */}
+          <div className="absolute -top-1 -right-1 w-4 h-4 border-t border-r border-[#6ec4e5]/40" />
+          {/* BL bracket */}
+          <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b border-l border-[#6ec4e5]/40" />
+          {/* BR bracket */}
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b border-r border-[#6ec4e5]/40" />
+          {/* Wireframe sphere SVG */}
+          <svg
+            viewBox="0 0 200 200"
+            className="w-full h-full opacity-40"
+            fill="none"
+            stroke="#6ec4e5"
+            strokeWidth="0.8"
+          >
+            {/* Outer circle */}
+            <circle cx="100" cy="100" r="85" strokeWidth="1" />
+            {/* Latitude lines */}
+            <ellipse cx="100" cy="60" rx="78" ry="8" />
+            <ellipse cx="100" cy="80" rx="83" ry="6" />
+            {/* Equator */}
+            <ellipse cx="100" cy="100" rx="85" ry="4" strokeWidth="1" />
+            <ellipse cx="100" cy="120" rx="83" ry="6" />
+            <ellipse cx="100" cy="140" rx="78" ry="8" />
+            {/* Meridian lines (vertical ellipses at different rotations) */}
+            {/* Center meridian */}
+            <ellipse cx="100" cy="100" rx="4" ry="85" strokeWidth="1" />
+            {/* ±30° */}
+            <ellipse cx="100" cy="100" rx="42" ry="85" />
+            {/* ±60° */}
+            <ellipse cx="100" cy="100" rx="74" ry="85" />
+            {/* Tilt accent line */}
+            <line x1="30" y1="50" x2="170" y2="150" strokeWidth="0.4" opacity="0.3" />
+          </svg>
+        </div>
+        {/* Label below globe */}
+        <p className="text-[#6ec4e5]/40 text-[10px] font-bold uppercase tracking-widest mt-1">
+          SECTOR MAP
+        </p>
       </div>
 
       {/* ─── LEFT MID-LOW: "FOR THE O.S." text columns ─── */}
       <div
         className="absolute left-8 top-[56%] z-10 text-[11px] font-bold uppercase leading-[1.6]"
-        style={{ opacity: flashVisible ? 0.7 : 0.15, transition: "opacity 0.5s" }}
+        style={{ opacity: flashBright ? 1 : 0.35, transition: "opacity 0.3s", textShadow: flashBright ? '0 0 8px #6ec4e5, 0 0 16px #6ec4e5' : 'none' }}
       >
         <div className="flex gap-6">
           <div className="text-center">
@@ -230,7 +253,6 @@ export default function AimTrainer() {
       <div className="absolute left-8 bottom-[22%] z-10">
         <div
           className="border border-white/30 bg-[#0a1428]/60 px-6 py-3"
-          style={{ opacity: vitalsFlash ? 1 : 0.3, transition: "opacity 0.4s" }}
         >
           <p className="font-bold text-base uppercase">
             <span className="text-white">VITALS :</span>{" "}
@@ -293,7 +315,7 @@ export default function AimTrainer() {
         <div className="border border-white/30 bg-[#0a1428]/60 px-5 py-3 w-56">
           <img src="/aim-chart.svg" alt="" className="w-28 h-10 mb-2 opacity-70" />
           <p
-            className="font-bold text-xs text-[#6ec4e5] uppercase text-center transition-opacity duration-500"
+            className="font-bold text-xs text-[#6ec4e5] uppercase text-center animate-radio-fade"
             key={radioIdx}
           >
             {radioMessages[radioIdx]}
@@ -309,7 +331,7 @@ export default function AimTrainer() {
         </p>
       </div>
 
-      {/* ─── CENTER: Custom crosshair ─── */}
+      {/* ─── CENTER: Custom crosshair (diamond reticle) ─── */}
       <div
         className="absolute z-20 pointer-events-none"
         style={{
@@ -318,14 +340,7 @@ export default function AimTrainer() {
           transform: "translate(-50%, -50%)",
         }}
       >
-        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-          <line x1="22" y1="0" x2="22" y2="16" stroke="#6ec4e5" strokeWidth="1.5" />
-          <line x1="22" y1="28" x2="22" y2="44" stroke="#6ec4e5" strokeWidth="1.5" />
-          <line x1="0" y1="22" x2="16" y2="22" stroke="#6ec4e5" strokeWidth="1.5" />
-          <line x1="28" y1="22" x2="44" y2="22" stroke="#6ec4e5" strokeWidth="1.5" />
-          <circle cx="22" cy="22" r="8" stroke="#6ec4e5" strokeWidth="1" opacity="0.5" />
-          <circle cx="22" cy="22" r="2" fill="#6ec4e5" />
-        </svg>
+        <img src="/aim-crosshair-new.svg" alt="" className="w-24 h-14" style={{ filter: 'drop-shadow(0 0 6px rgba(106,186,237,0.4))' }} />
       </div>
 
       {/* ─── CENTER: HUD crosshair indicator (static) ─── */}
@@ -356,7 +371,7 @@ export default function AimTrainer() {
       {/* ─── BACK TO PORTAL button ─── */}
       <button
         onClick={() => navigate("/play")}
-        className="absolute top-4 left-4 z-30 px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto"
+        className="absolute bottom-[15%] left-8 z-30 px-3 py-1.5 border border-[#6ec4e5]/40 bg-black/50 text-[#6ec4e5] font-bold text-xs uppercase hover:bg-[#6ec4e5]/20 transition-colors pointer-events-auto"
       >
         ← EXIT
       </button>
