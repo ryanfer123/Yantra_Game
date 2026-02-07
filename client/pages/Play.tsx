@@ -56,19 +56,10 @@ export default function Play() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#1f2227]">
-      <img
-        src={labScene}
-        alt="Lab scene"
-        className="absolute inset-0 h-full w-full object-cover pixelated"
-      />
-
-      {/* Civilian character – move with W A S D */}
-      <CivilianCharacter onPortalEnter={() => navigate("/aim-trainer")} />
-
-      {/* Top status bar – health */}
-      <div className="relative z-10 mx-auto mt-4 w-[92%] max-w-5xl">
-        <div className="relative flex h-7 sm:h-8 w-full overflow-hidden border-2 border-[#2b3446] bg-[#1b202b] shadow-[0_0_0_2px_rgba(12,14,20,0.7)]">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#1f2227] flex flex-col">
+      {/* Top status bar – health (full width, above everything) */}
+      <div className="relative z-20 w-full shrink-0">
+        <div className="relative flex h-7 sm:h-8 w-full overflow-hidden bg-[#1b202b] shadow-[0_0_0_2px_rgba(12,14,20,0.7)]">
           <div
             className="h-full bg-[#2c7a54] health-bar-disintegrate transition-[width] duration-700"
             style={{ width: `${health}%` }}
@@ -86,8 +77,19 @@ export default function Play() {
         </div>
       </div>
 
+      {/* Game area (below health bar) */}
+      <div className="relative flex-1">
+        <img
+          src={labScene}
+          alt="Lab scene"
+          className="absolute inset-0 h-full w-full object-cover pixelated"
+        />
+
+        {/* Civilian character – move with W A S D */}
+        <CivilianCharacter onPortalEnter={() => navigate("/aim-trainer")} />
+
       {/* HUD – round, role, trust score */}
-      <div className="absolute z-10 top-14 left-4 sm:left-8 flex flex-col gap-1">
+      <div className="absolute z-10 top-2 left-4 sm:left-8 flex flex-col gap-1">
         <span className="font-pixel text-[10px] sm:text-xs text-pixel-cyan uppercase">
           Round {round}/4
         </span>
@@ -105,7 +107,7 @@ export default function Play() {
       </div>
 
       {/* Player count */}
-      <div className="absolute z-10 top-14 right-4 sm:right-8 flex flex-col items-end gap-1">
+      <div className="absolute z-10 top-2 right-4 sm:right-8 flex flex-col items-end gap-1">
         <span className="font-pixel text-[10px] sm:text-xs text-gray-400 uppercase">
           Players: {totalPlayers}
         </span>
@@ -127,6 +129,7 @@ export default function Play() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
