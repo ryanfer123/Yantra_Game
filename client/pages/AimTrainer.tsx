@@ -1,23 +1,90 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
+const GRID_SIZE = 5;
+const GAME_DURATION = 45; // seconds
+
+function randomPos(): [number, number] {
+  return [
+    Math.floor(Math.random() * GRID_SIZE),
+    Math.floor(Math.random() * GRID_SIZE),
+  ];
+}
+
+function calcScore(hits: number): number {
+  // 0 hits → 60,  60+ hits → 100 (linear scale, clamped)
+  const pointsAdded = (hits / 60) * 40;
+  return Math.max(60, Math.min(100, 60 + Math.floor(pointsAdded)));
+}
+
 export default function AimTrainer() {
   const navigate = useNavigate();
 
+  // ── Game states: "start" | "playing" | "over" ──
+  const [gamePhase, setGamePhase] = useState<"start" | "playing" | "over">("start");
+
   // ── Timer ──
-  const [timeLeft, setTimeLeft] = useState(120); // 2-minute wave
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   useEffect(() => {
-    const id = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
+    if (gamePhase !== "playing") return;
+    const id = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          setGamePhase("over");
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [gamePhase]);
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
   const secs = String(timeLeft % 60).padStart(2, "0");
+
+  // ── Target position ──
+  const [targetPos, setTargetPos] = useState<[number, number]>(randomPos);
 
   // ── Ammo & Shield ──
   const [ammo, setAmmo] = useState(1000);
   const [shield, setShield] = useState(200);
   const clickCountRef = useRef(0);
   const [glitchesEliminated, setGlitchesEliminated] = useState(0);
+
+  // ── Start / Restart game ──
+  const startGame = useCallback(() => {
+    setTimeLeft(GAME_DURATION);
+    setGlitchesEliminated(0);
+    setAmmo(1000);
+    setShield(200);
+    clickCountRef.current = 0;
+    setTargetPos(randomPos());
+    setGamePhase("playing");
+    setShowLoading(false);
+  }, []);
+
+  // ── Grid target hit ──
+  const handleTargetHit = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (gamePhase !== "playing") return;
+    setGlitchesEliminated((g) => g + 1);
+    setAmmo((a) => Math.max(0, a - 1));
+    clickCountRef.current += 1;
+    if (clickCountRef.current % 13 === 0) {
+      setShield((s) => Math.max(0, s - 10));
+    }
+    setTargetPos(randomPos());
+  }, [gamePhase]);
+
+  // ── Background click (miss) ──
+  const handleMiss = useCallback(() => {
+    if (gamePhase !== "playing") return;
+    if (ammo <= 0) return;
+    setAmmo((a) => a - 1);
+    clickCountRef.current += 1;
+    if (clickCountRef.current % 13 === 0) {
+      setShield((s) => Math.max(0, s - 10));
+    }
+  }, [gamePhase, ammo]);
 
   // ── Cursor position (coordinates display) ──
   const [cursor, setCursor] = useState({ x: 0, y: 0 });
@@ -31,20 +98,6 @@ export default function AimTrainer() {
       y: Math.round(((e.clientY - rect.top) / rect.height) * 100),
     });
   }, []);
-
-  // ── Click (shoot) ──
-  const handleClick = () => {
-    if (ammo <= 0) return;
-    setAmmo((a) => a - 1);
-    clickCountRef.current += 1;
-    if (clickCountRef.current % 13 === 0) {
-      setShield((s) => Math.max(0, s - 10));
-    }
-    // Random chance to "hit" a glitch
-    if (Math.random() < 0.3) {
-      setGlitchesEliminated((g) => g + 1);
-    }
-  };
 
   // ── Radar sweep angle ──
   const [sweepAngle, setSweepAngle] = useState(0);
@@ -82,7 +135,6 @@ export default function AimTrainer() {
   const [radioActive, setRadioActive] = useState(true);
   useEffect(() => {
     const id = setInterval(() => {
-      // Brief silence between messages
       setRadioActive(false);
       setTimeout(() => {
         setRadioIdx((i) => (i + 1) % 3);
@@ -92,7 +144,7 @@ export default function AimTrainer() {
     return () => clearInterval(id);
   }, []);
 
-  // ── "FOR THE O.S." text flash (default dim, bright on flash) ──
+  // ── "FOR THE O.S." text flash ──
   const [flashBright, setFlashBright] = useState(false);
   useEffect(() => {
     const flash = () => {
@@ -103,30 +155,24 @@ export default function AimTrainer() {
     return () => clearInterval(id);
   }, []);
 
-  // ── Task popup placeholder ──
+  // ── Task popup ──
   const [showTaskPopup, setShowTaskPopup] = useState(false);
 
-  // ── Loading screen (shown when timer ends) ──
+  // ── Loading screen (shown when game ends) ──
   const [showLoading, setShowLoading] = useState(false);
 
   useEffect(() => {
-    if (timeLeft === 0 && !showLoading) {
+    if (gamePhase === "over" && !showLoading) {
       setShowLoading(true);
-      setTimeout(() => navigate("/play"), 3000);
     }
-  }, [timeLeft, showLoading, navigate]);
-
-  // ── Complete task → go back to portal ──
-  const handleCompleteTask = () => {
-    navigate("/play");
-  };
+  }, [gamePhase, showLoading]);
 
   return (
     <div
       ref={containerRef}
       className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] cursor-crosshair select-none"
       onMouseMove={handleMouseMove}
-      onClick={handleClick}
+      onClick={handleMiss}
       style={{ fontFamily: "'Jura', sans-serif" }}
     >
       {/* Background image (nighttime cityscape) */}
@@ -253,8 +299,31 @@ export default function AimTrainer() {
             </div>
           </div>
 
-          {/* Middle Center: empty (crosshair area) */}
-          <div className="flex-1" />
+          {/* Middle Center: 5×5 Aim Grid */}
+          <div className="flex-1 flex items-center justify-center">
+            {gamePhase === "playing" && (
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-2 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
+                  const r = Math.floor(idx / GRID_SIZE);
+                  const c = idx % GRID_SIZE;
+                  const isTarget = r === targetPos[0] && c === targetPos[1];
+                  return (
+                    <button
+                      key={`${r}-${c}`}
+                      onClick={isTarget ? handleTargetHit : handleMiss}
+                      className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border font-bold text-xl sm:text-2xl transition-all duration-100 ${
+                        isTarget
+                          ? "border-[#6ec4e5] bg-[#6ec4e5]/20 text-[#ff4444] hover:bg-[#6ec4e5]/40 hover:scale-110 shadow-[0_0_12px_rgba(110,196,229,0.3)]"
+                          : "border-white/10 bg-white/5 text-transparent hover:bg-white/10 cursor-crosshair"
+                      }`}
+                    >
+                      {isTarget ? "👾" : "·"}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Middle Right: Ammo/Shield + Audio bars */}
           <div className="flex flex-col items-end justify-start gap-3 sm:gap-4 shrink-0">
@@ -384,8 +453,45 @@ export default function AimTrainer() {
         </div>
       )}
 
-      {/* ─── LOADING SCREEN (when timer ends) ─── */}
-      {showLoading && (
+      {/* ─── START SCREEN ─── */}
+      {gamePhase === "start" && (
+        <div
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 pointer-events-auto"
+          style={{ fontFamily: "'Jura', sans-serif" }}
+        >
+          <div
+            className="absolute inset-0 pointer-events-none opacity-10"
+            style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(110,196,229,0.08) 2px, rgba(110,196,229,0.08) 4px)' }}
+          />
+          <p className="text-[#6ec4e5]/60 text-xs uppercase tracking-[0.3em] mb-4">
+            // MISSION BRIEFING
+          </p>
+          <h2 className="font-bold text-3xl sm:text-4xl text-[#6ec4e5] uppercase tracking-widest mb-3">
+            TERMINATE THE GLITCH
+          </h2>
+          <p className="text-white/50 text-sm uppercase tracking-wider mb-2">
+            PROTOCOL: ELIMINATE GLITCHES FOR <span className="text-[#6ec4e5] font-bold">{GAME_DURATION}s</span>
+          </p>
+          <p className="text-white/30 text-xs uppercase tracking-wider mb-8">
+            CLICK THE 👾 TO ELIMINATE • MISSES COST AMMO
+          </p>
+          <button
+            onClick={startGame}
+            className="px-8 py-3 border-2 border-[#6ec4e5] text-[#6ec4e5] font-bold text-lg uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors"
+          >
+            START MISSION
+          </button>
+          <button
+            onClick={() => navigate("/play")}
+            className="mt-4 px-6 py-2 border border-white/20 text-white/40 font-bold text-xs uppercase hover:text-white/70 transition-colors"
+          >
+            ← BACK TO BASE
+          </button>
+        </div>
+      )}
+
+      {/* ─── GAME OVER SCREEN ─── */}
+      {showLoading && gamePhase === "over" && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 pointer-events-auto animate-loading-fade-in"
           style={{ fontFamily: "'Jura', sans-serif" }}
@@ -398,20 +504,43 @@ export default function AimTrainer() {
           <div className="absolute top-[70%] left-0 right-0 h-px bg-[#6ec4e5]/20" />
 
           <p className="text-[#6ec4e5]/60 text-xs uppercase tracking-[0.3em] mb-6">
-            // RETURNING TO BASE
+            // TIME LIMIT REACHED
           </p>
-          <h2 className="font-bold text-2xl text-[#6ec4e5] uppercase tracking-widest mb-3">
+          <h2 className="font-bold text-2xl sm:text-3xl text-[#6ec4e5] uppercase tracking-widest mb-3">
             WAVE COMPLETE
           </h2>
-          <p className="text-white/50 text-sm uppercase tracking-wider mb-8">
-            GLITCHES ELIMINATED : <span className="text-[#6ec4e5]">{glitchesEliminated}</span>
-          </p>
-          <div className="w-64 h-1 bg-white/10 overflow-hidden">
-            <div className="h-full bg-[#6ec4e5] animate-loading-bar" />
+
+          <div className="flex gap-8 sm:gap-12 my-6">
+            <div className="text-center">
+              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">TOTAL GLITCHES</p>
+              <p className="font-bold text-3xl sm:text-4xl text-[#6ec4e5]">{glitchesEliminated}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">MISSION SCORE</p>
+              <p className="font-bold text-3xl sm:text-4xl text-[#6ec4e5]">{calcScore(glitchesEliminated)}</p>
+            </div>
           </div>
-          <p className="text-white/30 text-[10px] uppercase tracking-widest mt-4">
-            TELEPORTING TO SECTOR MAP...
+
+          <p className="text-white/50 text-sm uppercase tracking-wider mb-8">
+            STATUS : <span className={`font-bold ${calcScore(glitchesEliminated) > 80 ? 'text-green-400' : 'text-yellow-400'}`}>
+              {calcScore(glitchesEliminated) > 80 ? 'AUTHORITY APPROVED' : 'STANDARD PERFORMANCE'}
+            </span>
           </p>
+
+          <div className="flex gap-4">
+            <button
+              onClick={startGame}
+              className="px-6 py-2 border-2 border-[#6ec4e5] text-[#6ec4e5] font-bold text-sm uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors"
+            >
+              RE-CALIBRATE
+            </button>
+            <button
+              onClick={() => navigate("/play")}
+              className="px-6 py-2 border border-white/30 text-white/60 font-bold text-sm uppercase tracking-wider hover:bg-white/10 transition-colors"
+            >
+              RETURN TO BASE
+            </button>
+          </div>
         </div>
       )}
     </div>
