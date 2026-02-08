@@ -177,7 +177,7 @@ export default function AimTrainer() {
     >
       {/* Background image (nighttime cityscape) */}
       <img
-        src="/aim-bg-new.png"
+        src="/aim-bg-v2.png"
         alt=""
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
@@ -311,11 +311,10 @@ export default function AimTrainer() {
                     <button
                       key={`${r}-${c}`}
                       onClick={isTarget ? handleTargetHit : handleMiss}
-                      className={`flex items-center justify-center cursor-crosshair transition-all duration-150 ${
-                        isTarget
+                      className={`flex items-center justify-center cursor-crosshair transition-all duration-150 ${isTarget
                           ? "text-3xl sm:text-4xl lg:text-5xl hover:scale-110"
                           : ""
-                      }`}
+                        }`}
                     >
                       {isTarget && <img src="/glitch-sprite.png" alt="glitch" className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-contain drop-shadow-[0_0_12px_rgba(255,50,50,0.6)] animate-pulse" />}
                     </button>
